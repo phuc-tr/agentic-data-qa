@@ -5,6 +5,24 @@ import sqlalchemy
 import pandas as pd
 import numpy as np
 
+def get_schema_view(engine, table_name: str, df: pd.DataFrame) -> dict:
+    """
+    Returns schema metadata comparing declared DB types vs observed DataFrame types.
+    Includes declared types, observed types, and differences.
+    """
+    # Get declared types from database
+    insp = sqlalchemy.inspect(engine)
+    declared_types = {col["name"]: str(col["type"]) for col in insp.get_columns(table_name)}
+
+    # Observed types from DataFrame
+    observed_types = {c: str(dtype) for c, dtype in df.dtypes.items()}
+
+    return {
+        "declared_types": declared_types,
+        "observed_types": observed_types,
+    }
+
+
 def main():
     with open("configs/datasources.yaml", "r") as f:
         datasources = yaml.safe_load(f)
@@ -57,6 +75,12 @@ def main():
     with open(profile_path, "w") as f:
         json.dump(profile, f, indent=2)
     print(f"Profile saved to {profile_path}")
+
+    schema_metadata = get_schema_view(engine, "radacct", df)
+    schema_path = f"artifacts/metadata/{dataset}.schema_view.{run_id}.json"
+    with open(schema_path, "w") as f:
+        json.dump(schema_metadata, f, indent=2)
+    print(f"Schema metadata saved to {schema_path}")
 
 if __name__ == "__main__":
     main()

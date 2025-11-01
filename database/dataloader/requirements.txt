@@ -1,0 +1,6 @@
+pyyaml
+sqlalchemy
+pandas
+pymysql
+numpy
+cryptography
