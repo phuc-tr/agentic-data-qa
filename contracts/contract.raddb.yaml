@@ -1,0 +1,205 @@
+version: 1.1.0 
+status: active
+
+description:
+  purpose: RADIUS Accounting Data
+  description: |
+    This contract defines the schema for RADIUS accounting data, which is used to track user sessions
+    in a network environment. The data includes information about session start and stop times, data usage,
+    and other relevant metrics.
+  
+server:
+  - server: mysql
+    type: mysql
+    host: localhost
+    port: 3306
+    database: raddb
+    schema: public
+
+schema:
+  - name: radacct
+    physicalName: radacct
+    physicalType: table
+    description: RADIUS Accounting Table
+    dataGranularityDescription: Each record represents one RADIUS session (start/stop/update).
+    properties:
+      - name: radacctid
+        physicalType: bigint(20)
+        logicalType: integer
+        primaryKey: true
+        primaryKeyPosition: 1
+        required: true
+        description: Unique identifier for accounting record.
+        classification: public
+
+      - name: acctsessionid
+        physicalType: varchar(64)
+        logicalType: string
+        description: Session ID assigned by RADIUS client.
+        required: true
+        classification: public
+
+      - name: acctuniqueid
+        physicalType: varchar(32)
+        logicalType: string
+        description: Unique accounting session ID across all NAS devices.
+        required: true
+        classification: public
+
+      - name: realm
+        physicalType: varchar(64)
+        logicalType: string
+        description: Network realm or domain of the user.
+        classification: public
+
+      - name: nasportid
+        physicalType: varchar(15)
+        logicalType: string
+        description: NAS port identifier.
+        classification: public
+
+      - name: nasporttype
+        physicalType: varchar(32)
+        logicalType: string
+        description: Type of NAS port (e.g., Ethernet, Wireless).
+        classification: public
+
+      - name: acctstarttime
+        physicalType: datetime
+        logicalType: datetime
+        description: Time when session started.
+        classification: public
+
+      - name: acctupdatetime
+        physicalType: datetime
+        logicalType: datetime
+        description: Last update timestamp for ongoing sessions.
+        classification: public
+
+      - name: acctstoptime
+        physicalType: datetime
+        logicalType: datetime
+        description: Time when session stopped.
+        classification: public
+
+      - name: acctinterval
+        physicalType: int(11)
+        logicalType: integer
+        description: Interval between interim updates.
+        classification: public
+
+      - name: acctsessiontime
+        physicalType: int(10) unsigned
+        logicalType: integer
+        description: Total session duration in seconds.
+        classification: public
+
+      - name: acctauthentic
+        physicalType: varchar(32)
+        logicalType: string
+        description: Authentication type used (e.g., RADIUS, Local).
+        classification: public
+
+      - name: connectinfo_start
+        physicalType: varchar(50)
+        logicalType: string
+        description: Connection information when session started.
+        classification: public
+
+      - name: connectinfo_stop
+        physicalType: varchar(50)
+        logicalType: string
+        description: Connection information when session stopped.
+        classification: public
+
+      - name: acctinputoctets
+        physicalType: bigint(20)
+        logicalType: integer
+        description: Total number of input octets received during session.
+        classification: public
+
+      - name: acctoutputoctets
+        physicalType: bigint(20)
+        logicalType: integer
+        description: Total number of output octets sent during session.
+        classification: public
+
+      - name: calledstationid
+        physicalType: varchar(50)
+        logicalType: string
+        description: Identifier of the called station (e.g., access point MAC).
+        classification: public
+
+      - name: callingstationid
+        physicalType: varchar(50)
+        logicalType: string
+        description: Identifier of the calling station (e.g., client MAC).
+        classification: restricted
+
+      - name: acctterminatecause
+        physicalType: varchar(32)
+        logicalType: string
+        description: Reason why session was terminated (e.g., User-Request, Lost-Carrier).
+        classification: public
+
+      - name: servicetype
+        physicalType: varchar(32)
+        logicalType: string
+        description: Type of service provided to the user.
+        classification: public
+
+      - name: framedprotocol
+        physicalType: varchar(32)
+        logicalType: string
+        description: Framed protocol (e.g., PPP, SLIP).
+        classification: public
+
+      - name: framedipv6address
+        physicalType: varchar(45)
+        logicalType: string
+        description: IPv6 address assigned to the session.
+        classification: public
+
+      - name: framedipv6prefix
+        physicalType: varchar(45)
+        logicalType: string
+        description: IPv6 prefix for the session.
+        classification: public
+
+      - name: framedinterfaceid
+        physicalType: varchar(44)
+        logicalType: string
+        description: Interface ID associated with IPv6.
+        classification: public
+
+      - name: delegatedipv6prefix
+        physicalType: varchar(45)
+        logicalType: string
+        description: Delegated IPv6 prefix for downstream clients.
+        classification: public
+    quality:
+      - rule: duplicationCheck
+        type: library
+        dimension: uniqueness
+        description: Ensure acctuniqueid is unique across all records.
+        severity: error 
+        mustBeLessThan: 1
+        unit: rows
+      - rule: nullCheck
+        type: library
+        description: Ensure acctstarttime and acctstoptime are not null for closed sessions.
+        dimension: completeness
+        severity: warning
+      - rule: logicalConsistency
+        type: library
+        description: Ensure acctstoptime >= acctstarttime when both exist.
+        dimension: consistency
+        severity: error
+      - rule: domainValueCheck
+        type: library
+        description: Ensure acctterminatecause uses valid RADIUS termination codes.
+        dimension: conformity
+        severity: warning
+        customProperties:
+          - property: ALLOWED_VALUES
+            value: [ 'User-Request', 'Admin-Reset', 'Host-Request', 'NAS-Error', 'Port-Error', 'Service-Unvaliable' ]
