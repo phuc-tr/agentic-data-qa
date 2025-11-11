@@ -1,0 +1,171 @@
+{
+  "dataset": "radacct",
+  "proposals": [
+    {
+      "check_id": "radacct:not_null:radacctid",
+      "type": "not_null",
+      "column": "radacctid",
+      "params": {},
+      "rationale": "Contract specifies `radacctid` as `required: true`. Profile shows no nulls currently, but it's a critical primary key.",
+      "signals": {
+        "null_rate": 0.0
+      },
+      "likelihood": 0.85,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:unique:radacctid",
+      "type": "unique",
+      "column": "radacctid",
+      "params": {},
+      "rationale": "Contract specifies `radacctid` as `primaryKey: true`. Profile shows no duplicates, ensuring uniqueness for the primary key.",
+      "signals": {
+        "distinct_ratio": 1.0
+      },
+      "likelihood": 0.9,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:not_null:acctsessionid",
+      "type": "not_null",
+      "column": "acctsessionid",
+      "params": {},
+      "rationale": "Contract specifies `acctsessionid` as `required: true`. Profile shows no nulls.",
+      "signals": {
+        "null_rate": 0.0
+      },
+      "likelihood": 0.8,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:not_null:acctuniqueid",
+      "type": "not_null",
+      "column": "acctuniqueid",
+      "params": {},
+      "rationale": "Contract specifies `acctuniqueid` as `required: true`. Profile shows no nulls currently.",
+      "signals": {
+        "null_rate": 0.0
+      },
+      "likelihood": 0.85,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:unique:acctuniqueid",
+      "type": "unique",
+      "column": "acctuniqueid",
+      "params": {},
+      "rationale": "Contract explicitly requires `acctuniqueid` to be unique via a `duplicationCheck` quality rule. Profile confirms no duplicates.",
+      "signals": {
+        "distinct_ratio": 1.0
+      },
+      "likelihood": 0.95,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:freshness:acctupdatetime",
+      "type": "freshness",
+      "column": "acctupdatetime",
+      "params": {
+        "max_delay_min": 1440
+      },
+      "rationale": "Profile shows `freshness_days` of 1934, indicating severe staleness. Accounting data should be significantly more recent. Setting an initial maximum delay of 1 day (1440 minutes) to highlight this issue.",
+      "signals": {
+        "freshness_days": 1934
+      },
+      "likelihood": 0.98,
+      "origin": {
+        "from_profile": true
+      }
+    },
+    {
+      "check_id": "radacct:not_null:acctstarttime",
+      "type": "not_null",
+      "column": "acctstarttime",
+      "params": {},
+      "rationale": "Contract specifies `acctstarttime` as `required: true` and includes a `nullCheck` quality rule. Profile shows no nulls.",
+      "signals": {
+        "null_rate": 0.0
+      },
+      "likelihood": 0.8,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:domain:acctterminatecause",
+      "type": "domain",
+      "column": "acctterminatecause",
+      "params": {
+        "allowed_set": [
+          "User-Request",
+          "Admin-Reset",
+          "Host-Request",
+          "NAS-Error",
+          "Port-Error",
+          "Service-Unvaliable"
+        ]
+      },
+      "rationale": "Contract explicitly defines allowed values for `acctterminatecause` via a `domainValueCheck` quality rule. Profile shows observed values ('Port-Error', 'User-Request', 'Host-Request') are all within this set.",
+      "signals": {
+        "topk": {
+          "Port-Error": 72,
+          "User-Request": 17,
+          "Host-Request": 11
+        }
+      },
+      "likelihood": 0.88,
+      "origin": {
+        "from_contract": true
+      }
+    },
+    {
+      "check_id": "radacct:domain:realm",
+      "type": "domain",
+      "column": "realm",
+      "params": {
+        "allowed_set_excludes": [
+          ""
+        ]
+      },
+      "rationale": "Profile `topk` shows `realm` is entirely composed of empty strings (''). This strongly suggests missing or unconfigured data, as a 'network realm' is expected to be a meaningful identifier. The check proposes that empty strings are not allowed.",
+      "signals": {
+        "topk": {
+          "": 100
+        },
+        "distinct_ratio": 0.01
+      },
+      "likelihood": 0.8,
+      "origin": {
+        "from_profile": true
+      }
+    },
+    {
+      "check_id": "radacct:range:acctsessiontime",
+      "type": "range",
+      "column": "acctsessiontime",
+      "params": {
+        "min_value": 0,
+        "max_value": 450000
+      },
+      "rationale": "Contract's `unsigned` logical type implies a `min_value` of 0. Profile `p99` of `449007` provides an upper bound for typical session durations (approximately 5.2 days), which we'll round up slightly to 450,000.",
+      "signals": {
+        "p01": 49.82,
+        "p99": 449007.12
+      },
+      "likelihood": 0.7,
+      "origin": {
+        "from_profile": true
+      }
+    }
+  ]
+}
