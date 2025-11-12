@@ -1,0 +1,115 @@
+{
+  "name": "radacct_expectation_suite",
+  "expectations": [
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "radacctid"
+      },
+      "meta": {
+        "check_id": "radacct:not_null:radacctid",
+        "rationale": "Contract specifies `radacctid` as `required: true`. Profile shows no nulls currently, but it's a critical primary key."
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "radacctid"
+      },
+      "meta": {
+        "check_id": "radacct:unique:radacctid",
+        "rationale": "Contract specifies `radacctid` as `primaryKey: true`. Profile shows no duplicates, ensuring uniqueness for the primary key."
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "acctsessionid"
+      },
+      "meta": {
+        "check_id": "radacct:not_null:acctsessionid",
+        "rationale": "Contract specifies `acctsessionid` as `required: true`. Profile shows no nulls."
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "acctuniqueid"
+      },
+      "meta": {
+        "check_id": "radacct:not_null:acctuniqueid",
+        "rationale": "Contract specifies `acctuniqueid` as `required: true`. Profile shows no nulls currently."
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "acctuniqueid"
+      },
+      "meta": {
+        "check_id": "radacct:unique:acctuniqueid",
+        "rationale": "Contract explicitly requires `acctuniqueid` to be unique via a `duplicationCheck` quality rule. Profile confirms no duplicates."
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "acctstarttime"
+      },
+      "meta": {
+        "check_id": "radacct:not_null:acctstarttime",
+        "rationale": "Contract specifies `acctstarttime` as `required: true` and includes a `nullCheck` quality rule. Profile shows no nulls."
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "acctterminatecause",
+        "value_set": [
+          "User-Request",
+          "Admin-Reset",
+          "Host-Request",
+          "NAS-Error",
+          "Port-Error",
+          "Service-Unvaliable"
+        ]
+      },
+      "meta": {
+        "check_id": "radacct:domain:acctterminatecause",
+        "rationale": "Contract explicitly defines allowed values for `acctterminatecause` via a `domainValueCheck` quality rule. Profile shows observed values ('Port-Error', 'User-Request', 'Host-Request') are all within this set."
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_in_set",
+      "kwargs": {
+        "column": "realm",
+        "value_set": [
+          ""
+        ]
+      },
+      "meta": {
+        "check_id": "radacct:domain:realm",
+        "rationale": "Profile `topk` shows `realm` is entirely composed of empty strings (''). This strongly suggests missing or unconfigured data, as a 'network realm' is expected to be a meaningful identifier. The check proposes that empty strings are not allowed."
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "acctsessiontime",
+        "min_value": 0,
+        "max_value": 450000
+      },
+      "meta": {
+        "check_id": "radacct:range:acctsessiontime",
+        "rationale": "Contract's `unsigned` logical type implies a `min_value` of 0. Profile `p99` of `449007` provides an upper bound for typical session durations (approximately 5.2 days), which we'll round up slightly to 450,000."
+      }
+    }
+  ],
+  "meta": {
+    "notes": {
+      "freshness_check_explanation": "The 'radacct:freshness:acctupdatetime' check has been omitted. Great Expectations' static JSON expectation suites do not natively support dynamic 'freshness' checks that compare a column's max timestamp to 'current_time - N minutes'. Such checks typically require custom expectations or external logic to inject dynamic date values at validation time."
+    }
+  },
+  "ge_cloud_id": null,
+  "data_asset_type": null
+}
