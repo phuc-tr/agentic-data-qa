@@ -1,5 +1,5 @@
 PROMPT_TEMPLATE = """
-Convert the parameterized data quality checks into a Great Expectations Expectation Suite in JSON format. Each check should be represented as an expectation with appropriate parameters.
+Convert the parameterized data quality checks into a Great Expectations Expectation Suite in JSON format. Each check should be represented as an expectation with appropriate parameters. Don't say anthing else in your response.
 
 Example output:
 {{
