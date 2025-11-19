@@ -2,6 +2,7 @@ from datetime import datetime
 from src import sampler, validator
 from src.proposer import generate_checks
 from src.suite_generator import agent
+from src.pr import create_pr
 
 
 def main():
@@ -16,6 +17,8 @@ def main():
     agent.main(run_id=run_id)
 
     validator.main(run_id=run_id)
+
+    create_pr.main()
 
 
 if __name__ == "__main__":
