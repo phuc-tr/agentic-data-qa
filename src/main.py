@@ -1,6 +1,6 @@
 import subprocess
 from datetime import datetime
-from src import sampler, validator, gater
+from src import sampler, validator, gater, coverage
 from src.proposer import generate_checks
 from src.suite_generator import agent
 from src.pr import create_pr
@@ -24,6 +24,9 @@ def main():
 
     # Gater
     gater.main(run_id=run_id)
+
+    # Coverage
+    coverage.main(run_id=run_id)
     # create_pr.main()
 
 
