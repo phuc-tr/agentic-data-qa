@@ -15,7 +15,8 @@ def make_openrouter_request(prompt: str) -> str:
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        #"model": "meta-llama/llama-3.3-70b-instruct:free",
+        "model": "google/gemini-2.5-flash",
         "messages": [{"role": "user", "content": prompt}]
     }
 

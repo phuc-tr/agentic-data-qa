@@ -1,7 +1,7 @@
 PROMPT_TEMPLATE = """
 You are a data quality engineer. You need to:
 
-Read the data contract and the latest profile, then produce up to 10 well-parameterized checks (NOT NULL, UNIQUE, RANGE, IN-SET, FK, FRESHNESS).
+Read the data contract and the latest profile, then produce at least one well-parameterized checks (NOT NULL, UNIQUE, RANGE, IN-SET, FK, FRESHNESS) for each rule.
 Each check includes: params, rationale, signals, and a likelihood (risk/utility) score.
 
 Detailed steps:
@@ -10,6 +10,7 @@ Detailed steps:
 2. Map issues to check types: NOT NULL, UNIQUE, RANGE, IN-SET/DOMAIN, FRESHNESS, FK.
 3. Parameterize checks: prefer contract values; if absent, use profile stats (e.g., RANGE min=p01, max=p99; FRESHNESS from SLA; IN-SET from contract domain).
 4. Compute a likelihood score (0–1) per proposal from profile signals (e.g., null_rate, dup_rate, oov_rate, freshness delay).
+5. Output the name of the contract rules as exactly shown in the contract in the origin field.
 
 Example output:
 {{
@@ -23,7 +24,7 @@ Example output:
       "rationale": "Contract says unique; distinct_ratio=1.0",
       "signals": {{"distinct_ratio": 1.0}},
       "likelihood": 0.80,
-      "origin": {{"from_contract": true}}
+      "origin": {{"from_contract": true, "rule": <rule_name_from_contract>}}
     }},
     {{
       "check_id": "orders:domain:country",
@@ -33,7 +34,7 @@ Example output:
       "rationale": "Contract domain; observed 38 OOV values",
       "signals": {{"oov_rate": 0.235}},
       "likelihood": 0.73,
-      "origin": {{"from_contract": true}}
+      "origin": {{"from_contract": true, "rule": <rule_name_from_contract>}}
     }},
     {{
       "check_id": "orders:freshness:created_at",
@@ -43,7 +44,7 @@ Example output:
       "rationale": "SLA 30m; observed 69m",
       "signals": {{"freshness_minutes": 69}},
       "likelihood": 0.88,
-      "origin": {{"from_contract": true}}
+      "origin": {{"from_contract": true, "rule": <rule_name_from_contract>}}
     }},
     {{
       "check_id": "orders:range:amount",
@@ -53,7 +54,7 @@ Example output:
       "rationale": "Use p99=890 as upper bound; long tail to 12840",
       "signals": {{"p99": 890, "max": 12840}},
       "likelihood": 0.55,
-      "origin": {{"from_profile": true}}
+      "origin": {{"from_profile": true, "rule": <rule_name_from_contract>}}
     }}
   ]
 }}

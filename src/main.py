@@ -1,3 +1,4 @@
+import subprocess
 from datetime import datetime
 from src import sampler, validator
 from src.proposer import generate_checks
@@ -16,9 +17,14 @@ def main():
     print(f"Starting suite generation job with run_id: {run_id}")
     agent.main(run_id=run_id)
 
+    subprocess.run(["python", "expectations/raddb_suite.py"])
+
     validator.main(run_id=run_id)
 
-    create_pr.main()
+    # Gater
+
+
+    # create_pr.main()
 
 
 if __name__ == "__main__":

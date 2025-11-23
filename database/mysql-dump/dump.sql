@@ -26,6 +26,7 @@ CREATE TABLE `radacct` (
   `framedipv6prefix` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `framedinterfaceid` varchar(44) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `delegatedipv6prefix` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`radacctid`),
   UNIQUE KEY `acctuniqueid` (`acctuniqueid`),
   KEY `framedipv6address` (`framedipv6address`),
