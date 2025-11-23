@@ -177,6 +177,14 @@ schema:
         logicalType: string
         description: Delegated IPv6 prefix for downstream clients.
         classification: public
+      
+      - name: created_at
+        physicalType: TIMESTAMP
+        logicalType: datetime
+        description: Record creation timestamp.
+        required: true
+        classification: public
+
     quality:
       - rule: duplicationCheck
         type: library
@@ -203,3 +211,10 @@ schema:
         customProperties:
           - property: ALLOWED_VALUES
             value: [ 'User-Request', 'Admin-Reset', 'Host-Request', 'NAS-Error', 'Port-Error', 'Service-Unvaliable' ]
+      - rule: freshnessCheck
+        type: library
+        description: Ensure data is ingested within 1 hour of acctstarttime.
+        dimension: timeliness
+        severity: warning
+        mustBeLessThan: 60
+        unit: minutes
