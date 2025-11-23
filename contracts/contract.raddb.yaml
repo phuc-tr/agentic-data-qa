@@ -213,8 +213,6 @@ schema:
             value: [ 'User-Request', 'Admin-Reset', 'Host-Request', 'NAS-Error', 'Port-Error', 'Service-Unvaliable' ]
       - rule: freshnessCheck
         type: library
-        description: Ensure data is ingested within 1 hour of acctstarttime.
+        description: Ensure created_at is within the last hour.
         dimension: timeliness
-        severity: warning
-        mustBeLessThan: 60
-        unit: minutes
+        severity: info

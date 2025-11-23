@@ -71,7 +71,7 @@ Example output:
 import great_expectations as gx
 context = gx.get_context(mode="file")
 
-suite_name = "my_expectation_suite"
+suite_name = "radacct_expectation_suite"
 suite = gx.ExpectationSuite(name=suite_name)
 suite = context.suites.add(suite)
 
