@@ -10,7 +10,7 @@ def main(run_id, dataset="raddb"):
     # Get expectation suite from context
     suite = context.suites.get(f"radacct_expectation_suite")
 
-    datasource = context.data_sources.add_pandas(name="my_pandas_datasource")
+    datasource = context.data_sources.add_or_update_pandas(name="my_pandas_datasource")
     data_asset = datasource.add_dataframe_asset(name="pd_dataframe_asset")
 
     batch_definition = data_asset.add_batch_definition_whole_dataframe("batch_definition")

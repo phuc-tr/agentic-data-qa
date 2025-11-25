@@ -5,6 +5,7 @@ def run(cmd):
     subprocess.run(cmd, shell=True, check=True)
 
 def main():
+    run("git branch -D test || true")
     run("git checkout -b test")
 
     filepath = "expectations/raddb_suite.json"
