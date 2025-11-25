@@ -11,6 +11,8 @@ Detailed steps:
 3. Parameterize checks: prefer contract values; if absent, use profile stats (e.g., RANGE min=p01, max=p99; FRESHNESS from SLA; IN-SET from contract domain).
 4. Compute a likelihood score (0–1) per proposal from profile signals (e.g., null_rate, dup_rate, oov_rate, freshness delay).
 5. Output the name of the contract rules as exactly shown in the contract in the origin field.
+6. Make sure each rule from the contract has at least one associated check in the output.
+
 
 Example output:
 {{

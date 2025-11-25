@@ -61,29 +61,51 @@ ExpectTableRowCountToEqualOtherTable,
 UnexpectedRowsExpectation,
 
 Note:
-The output should be valid Python code that can be executed within a Great Expectations DataContext.
-Do not include any explanations or additional text.
-Refer to the following example output for context initialization
-In the meta parameter, put the associated check_id 
-You should try to create expectations for all checks where possible. If a check cannot be directly mapped to an expectation type, skip it.
-Make you to give the correct parameters for each expectation based on the check details. If uncertain, use another expectation type that fits better.
-For freshness checks, compare against the current date.
+* The output should be valid Python code that can be executed within a Great Expectations DataContext.
+* Do not include any explanations or additional text.
+* Refer to the following example output for context initialization
+* In the meta parameter, put the associated check_id 
+* Only use existing check_ids from the proposals provided
+* You should try to create expectations for all checks where possible. If a check cannot be directly mapped to an expectation type, skip it.
+* Make you to give the correct parameters for each expectation based on the check details. If uncertain, use another expectation type that fits better.
+* For freshness checks, compare against the current date.
 
 Example output:
 ```
 import great_expectations as gx
+
 context = gx.get_context(mode="file")
 
 suite_name = "radacct_expectation_suite"
 suite = gx.ExpectationSuite(name=suite_name)
 suite = context.suites.add(suite)
 
-expectation = gx.expectations.ExpectColumnValuesToNotBeNull(meta={{"check_id": <CHECK_ID>}}, column="passenger_count")
-suite.add_expectation(expectation)
+def safe_add_expectation(suite, expectation_fn, **kwargs):
+    try:
+        expectation = expectation_fn(**kwargs)
+        suite.add_expectation(expectation)
+        print(f"Added expectation: {{expectation.expectation_type}}")
+    except Exception as e:
+        print(f"Error creating expectation {{expectation_fn.__name__}}: {{e}}")
 
-expectation = gx.expectations.ExpectColumnValuesToBeBetween(meta={{"check_id": <CHECK_ID>}},column="fare_amount", min_value=0, max_value=500)
-suite.add_expectation(expectation)
-# ... add more expectations as needed
+safe_add_expectation(
+    suite,
+    gx.expectations.ExpectColumnValuesToNotBeNull,
+    meta={{"check_id": "<CHECK_ID>"}},
+    column="passenger_count"
+)
+
+safe_add_expectation(
+    suite,
+    gx.expectations.ExpectColumnValuesToBeBetween,
+    meta={{"check_id": "<CHECK_ID>"}},
+    column="fare_amount",
+    min_value=0,
+    max_value=500
+)
+
+# ... add more using safe_add_expectation(...)
+
 ```
 
 Here are the data quality checks to convert:
