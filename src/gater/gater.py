@@ -3,7 +3,7 @@ from .prompt import PROMPT_TEMPLATE
 from src import utils
 
 history = 0.5  # Placeholder for historical performance metric
-confidence_threshold = 0.4
+confidence_threshold = 0.6
 
 def extract_python_code(text: str):
     """Extract Python code from a response text.
@@ -83,6 +83,7 @@ def main(run_id: str):
     with open(f"expectations/{dataset}_suite.py", "w") as f:
         f.write(suite)
     print(f"✅ Filtered expectation suite saved to expectations/{dataset}_suite.py")
+    return 1
     
 
 if __name__ == "__main__":

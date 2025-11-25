@@ -24,14 +24,19 @@ def main():
 
     # Coverage
     coverage.main(run_id=run_id)
-    # create_pr.main()
 
     # Gater
-    gater.main(run_id=run_id)
+    gater_result = gater.main(run_id=run_id)
 
     # Re-validate with filtered suite
+    if gater_result == 0:
+        print("No checks passed the gating criteria. Skipping re-validation and PR creation.")
+        return
+
     print(f"Starting re-validation job with run_id: {run_id}")
     validator.main(run_id=run_id)
+    
+    create_pr.main(run_id)
 
 if __name__ == "__main__":
     main()
