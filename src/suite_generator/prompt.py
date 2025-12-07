@@ -1,64 +1,71 @@
 PROMPT_TEMPLATE = """
 Convert the parameterized data quality checks into a Great Expectations Expectation Suite in Python code. Each check should be represented as an expectation with appropriate parameters. Don't say anthing else in your response.
 
-Note: You must use the correct expectation type for each check. The list of types you can choose from are:
-ExpectColumnDistinctValuesToBeInSet,
-ExpectColumnDistinctValuesToContainSet,
-ExpectColumnDistinctValuesToEqualSet,
-ExpectColumnKLDivergenceToBeLessThan,
-ExpectColumnMaxToBeBetween,
-ExpectColumnMeanToBeBetween,
-ExpectColumnMedianToBeBetween,
-ExpectColumnMinToBeBetween,
-ExpectColumnMostCommonValueToBeInSet,
-ExpectColumnPairValuesAToBeGreaterThanB,
-ExpectColumnPairValuesToBeEqual,
-ExpectColumnPairValuesToBeInSet,
-ExpectColumnProportionOfNonNullValuesToBeBetween,
-ExpectColumnProportionOfUniqueValuesToBeBetween,
-ExpectColumnQuantileValuesToBeBetween,
-ExpectColumnStdevToBeBetween,
-ExpectColumnSumToBeBetween,
-ExpectColumnToExist,
-ExpectColumnUniqueValueCountToBeBetween,
-ExpectColumnValueLengthsToBeBetween,
-ExpectColumnValueLengthsToEqual,
-ExpectColumnValuesToBeBetween,
-ExpectColumnValuesToBeDateutilParseable,
-ExpectColumnValuesToBeDecreasing,
-ExpectColumnValuesToBeIncreasing,
-ExpectColumnValuesToBeInSet,
-ExpectColumnValuesToBeInTypeList,
-ExpectColumnValuesToBeJsonParseable,
-ExpectColumnValuesToBeNull,
-ExpectColumnValuesToBeOfType,
-ExpectColumnValuesToBeUnique,
-ExpectColumnValuesToMatchJsonSchema,
-ExpectColumnValuesToMatchLikePattern,
-ExpectColumnValuesToMatchLikePatternList,
-ExpectColumnValuesToMatchRegex,
-ExpectColumnValuesToMatchRegexList,
-ExpectColumnValuesToMatchStrftimeFormat,
-ExpectColumnValuesToNotBeInSet,
-ExpectColumnValuesToNotBeNull,
-ExpectColumnValuesToNotMatchLikePattern,
-ExpectColumnValuesToNotMatchLikePatternList,
-ExpectColumnValuesToNotMatchRegex,
-ExpectColumnValuesToNotMatchRegexList,
-ExpectColumnValueZScoresToBeLessThan,
-ExpectCompoundColumnsToBeUnique,
-ExpectMulticolumnSumToEqual,
-ExpectMulticolumnValuesToBeUnique,
+Expectation Types Reference:
+-------------------------
+ExpectColumnDistinctValuesToBeInSet
+ExpectColumnDistinctValuesToContainSet
+ExpectColumnDistinctValuesToEqualSet
+ExpectColumnKLDivergenceToBeLessThan
+ExpectColumnMaxToBeBetween
+ExpectColumnMeanToBeBetween
+ExpectColumnMedianToBeBetween
+ExpectColumnMinToBeBetween
+ExpectColumnMostCommonValueToBeInSet
+ExpectColumnPairValuesAToBeGreaterThanB
+ExpectColumnPairValuesToBeEqual
+ExpectColumnPairValuesToBeInSet
+ExpectColumnProportionOfNonNullValuesToBeBetween
+ExpectColumnProportionOfUniqueValuesToBeBetween
+ExpectColumnQuantileValuesToBeBetween
+ExpectColumnStdevToBeBetween
+ExpectColumnSumToBeBetween
+ExpectColumnToExist
+ExpectColumnUniqueValueCountToBeBetween
+ExpectColumnValueLengthsToBeBetween
+ExpectColumnValueLengthsToEqual
+ExpectColumnValueZScoresToBeLessThan
+ExpectColumnValuesToBeBetween
+ExpectColumnValuesToBeDateutilParseable
+ExpectColumnValuesToBeDecreasing
+ExpectColumnValuesToBeInSet
+ExpectColumnValuesToBeInTypeList
+ExpectColumnValuesToBeIncreasing
+ExpectColumnValuesToBeJsonParseable
+ExpectColumnValuesToBeNull
+ExpectColumnValuesToBeOfType
+ExpectColumnValuesToBeUnique
+ExpectColumnValuesToMatchJsonSchema
+ExpectColumnValuesToMatchLikePattern
+ExpectColumnValuesToMatchLikePatternList
+ExpectColumnValuesToMatchRegex
+ExpectColumnValuesToMatchRegexList
+ExpectColumnValuesToMatchStrftimeFormat
+ExpectColumnValuesToNotBeInSet
+ExpectColumnValuesToNotBeNull
+ExpectColumnValuesToNotMatchLikePattern
+ExpectColumnValuesToNotMatchLikePatternList
+ExpectColumnValuesToNotMatchRegex
+ExpectColumnValuesToNotMatchRegexList
+ExpectCompoundColumnsToBeUnique
+ExpectMulticolumnSumToEqual
+ExpectMulticolumnValuesToBeUnique
+ExpectQueryResultsToMatchComparison
+ExpectSelectColumnValuesToBeUniqueWithinRecord
+ExpectTableColumnCountToBeBetween
+ExpectTableColumnCountToEqual
+ExpectTableColumnsToMatchOrderedList
+ExpectTableColumnsToMatchSet
+ExpectTableRowCountToBeBetween
+ExpectTableRowCountToEqual
+ExpectTableRowCountToEqualOtherTable
 
-ExpectSelectColumnValuesToBeUniqueWithinRecord,
-ExpectTableColumnCountToBeBetween,
-ExpectTableColumnCountToEqual,
-ExpectTableColumnsToMatchOrderedList,
-ExpectTableColumnsToMatchSet,
-ExpectTableRowCountToBeBetween,
-ExpectTableRowCountToEqual,
-ExpectTableRowCountToEqualOtherTable,
-UnexpectedRowsExpectation,
+Known errors to avoid:
+-------------------------
+Error creating expectation ExpectColumnValuesToBeBetween: 1 validation error for ExpectColumnValuesToBeBetween
+parse_strings_as_datetimes
+  extra fields not permitted (type=value_error.extra)
+-------------------------
 
 Note:
 * The output should be valid Python code that can be executed within a Great Expectations DataContext.
@@ -66,9 +73,10 @@ Note:
 * Refer to the following example output for context initialization
 * In the meta parameter, put the associated check_id 
 * Only use existing check_ids from the proposals provided
-* You should try to create expectations for all checks where possible. If a check cannot be directly mapped to an expectation type, skip it.
+* You should try to create expectations for all checks where possible.
 * Make you to give the correct parameters for each expectation based on the check details. If uncertain, use another expectation type that fits better.
 * For freshness checks, compare against the current date.
+* The suite should be named "radacct_expectation_suite"
 
 Example output:
 ```

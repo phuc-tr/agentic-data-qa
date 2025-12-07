@@ -1,6 +1,5 @@
 import os
 import json
-import re
 from .prompt import PROMPT_TEMPLATE
 from .post_process import post_process_checks
 from src import utils
@@ -44,14 +43,3 @@ def main(run_id: str):
             f.write(response.text)
 
     print(f"✅ Generated checks saved to {output_path}")
-
-    # import yaml
-    # contract_yaml = yaml.safe_load(contract)
-    # contract_rules = {q["rule"] for q in contract_yaml.get("schema")[0].get("quality", [])}
-    # proposed_rules = {p["origin"]["rule"] for p in json_data["proposals"] if "rule" in p.get("origin", {})}
-    # covered_rules = contract_rules.intersection(proposed_rules)
-    # coverage = len(covered_rules) / len(contract_rules) if contract_rules else 1.0
-    # print(f"✅ Coverage report: {len(covered_rules)}/{len(contract_rules)} rules covered ({coverage:.2%})")
-    # for rule in contract_rules:
-    #     status = "✅" if rule in proposed_rules else "❌"
-    #     print(f"  {status} {rule}")

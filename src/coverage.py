@@ -27,7 +27,7 @@ def load_proposals(dataset: str, run_id: str) -> Tuple[Dict[str, List[str]], Dic
     proposal_id_to_rule: Dict[str, str] = {}
     proposal_ids = set()
 
-    for p in proposals.get("proposals", []):
+    for p in proposals:
         origin = p.get("origin") or {}
         rule = origin.get("rule")
         pid = p.get("check_id") or p.get("id") or p.get("proposal_id") or p.get("proposalId")

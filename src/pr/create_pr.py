@@ -39,7 +39,7 @@ def build_pr_body(dataset: str, run_id: str):
     evidence_lines = []
     confidence_lines = []
 
-    for p in proposals.get("proposals", []):
+    for p in proposals:
         cid = p.get("check_id")
         if not cid:
             continue

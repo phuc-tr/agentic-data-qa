@@ -4,7 +4,7 @@ from src import sampler, validator, coverage
 from src.proposer import generate_checks
 from src.suite_generator import agent
 from src.pr import create_pr
-from src.gater import gater
+from src.gater_2 import main as gater_2
 
 def main():
     subprocess.run(["rm", "-r", "gx"])
@@ -23,18 +23,21 @@ def main():
     validator.main(run_id=run_id)
 
     # Coverage
-    coverage.main(run_id=run_id)
-
-    # Gater
-    gater_result = gater.main(run_id=run_id)
-
-    # Re-validate with filtered suite
+    # coverage.main(run_id=run_id)
+    gater_result = gater_2.main(run_id=run_id)
     if gater_result == 0:
-        print("No checks passed the gating criteria. Skipping re-validation and PR creation.")
+        print("No new update needed.")
         return
+    # Gater
+    # gater_result = gater.main(run_id=run_id)
 
-    print(f"Starting re-validation job with run_id: {run_id}")
-    validator.main(run_id=run_id)
+    # # Re-validate with filtered suite
+    # if gater_result == 0:
+    #     print("No checks passed the gating criteria. Skipping re-validation and PR creation.")
+    #     return
+
+    # print(f"Starting re-validation job with run_id: {run_id}")
+    # validator.main(run_id=run_id)
     
     create_pr.main(run_id)
 

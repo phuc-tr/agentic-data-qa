@@ -32,6 +32,9 @@ def main(run_id: str):
 
     with open(f"artifacts/proposals/{dataset}.{run_id}.json", "r") as f:
         proposals = json.load(f)
+
+    with open("src/suite_generator/expectations.txt", "r") as f:
+        expectation_list = f.read()
     
     prompt = PROMPT_TEMPLATE.format(
         proposals=json.dumps(proposals, indent=2)

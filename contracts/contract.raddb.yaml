@@ -1,5 +1,8 @@
-version: 1.1.0 
-status: active
+dataContractSpecification: 1.2.1
+id: my-data-contract-id
+info:
+  title: My Data Contract
+  version: 0.0.1
 
 description:
   purpose: RADIUS Accounting Data
@@ -8,211 +11,224 @@ description:
     in a network environment. The data includes information about session start and stop times, data usage,
     and other relevant metrics.
   
-server:
-  - server: mysql
+servers:
+  mysql:
+    server: mysql
     type: mysql
     host: localhost
     port: 3306
+    username: root
+    password: 123
     database: raddb
     schema: public
 
-schema:
-  - name: radacct
-    physicalName: radacct
-    physicalType: table
-    description: RADIUS Accounting Table
-    dataGranularityDescription: Each record represents one RADIUS session (start/stop/update).
-    properties:
-      - name: radacctid
+models:
+  raddb:
+    description: RADIUS Accounting Data Model
+    type: table
+    fields:
+      radacctid:
+        type: integer
         physicalType: bigint(20)
-        logicalType: integer
-        primaryKey: true
-        primaryKeyPosition: 1
         required: true
+        unique: true
+        primaryKey: true
         description: Unique identifier for accounting record.
         classification: public
 
-      - name: acctsessionid
+      acctsessionid:
+        type: string
         physicalType: varchar(64)
-        logicalType: string
+        required: true
         description: Session ID assigned by RADIUS client.
-        required: true
         classification: public
 
-      - name: acctuniqueid
+      acctuniqueid:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
-        description: Unique accounting session ID across all NAS devices.
         required: true
+        unique: true
+        description: Unique accounting session ID across all NAS devices.
         classification: public
 
-      - name: realm
+      realm:
+        type: string
         physicalType: varchar(64)
-        logicalType: string
         description: Network realm or domain of the user.
         classification: public
 
-      - name: nasportid
+      nasportid:
+        type: string
         physicalType: varchar(15)
-        logicalType: string
         description: NAS port identifier.
         classification: public
+        quality:
+          - type: text
+            description: Must follow format "Uniq-Sess-IDXX".
 
-      - name: nasporttype
+      nasporttype:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
-        description: Type of NAS port (e.g., Ethernet, Wireless).
+        description: Type of NAS port (e.g., Virtual, ISDN).
         classification: public
+        quality:
+          - type: library
+            metric: invalidValues
+            arguments:
+              validValues: [ 'Virtual', 'ISDN' ]
+            description: Ensure nasporttype uses valid port types.
+            mustBeLessThan: 1
 
-      - name: acctstarttime
+      acctstarttime:
+        type: timestamp
         physicalType: datetime
-        logicalType: datetime
         description: Time when session started.
         classification: public
 
-      - name: acctupdatetime
+      acctupdatetime:
+        type: timestamp
         physicalType: datetime
-        logicalType: datetime
         description: Last update timestamp for ongoing sessions.
         classification: public
 
-      - name: acctstoptime
+      acctstoptime:
+        type: timestamp
         physicalType: datetime
-        logicalType: datetime
         description: Time when session stopped.
         classification: public
+        quality:
+          - type: text
+            description: acctstoptime must be later than acctstarttime.
 
-      - name: acctinterval
+      acctinterval:
+        type: integer
         physicalType: int(11)
-        logicalType: integer
         description: Interval between interim updates.
         classification: public
 
-      - name: acctsessiontime
+      acctsessiontime:
+        type: integer
         physicalType: int(10) unsigned
-        logicalType: integer
         description: Total session duration in seconds.
         classification: public
+        quality:
+          - type: sql
+            description: 95% of acctsessiontime should be less than 30000 seconds.
+            query: SELECT quantile(acctsessiontime, 0.95) AS session_time_90th_percentile FROM radacct
+            mustBeLessThan: 30000
 
-      - name: acctauthentic
+      acctauthentic:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
         description: Authentication type used (e.g., RADIUS, Local).
         classification: public
 
-      - name: connectinfo_start
+      connectinfo_start:
+        type: string
         physicalType: varchar(50)
-        logicalType: string
         description: Connection information when session started.
         classification: public
 
-      - name: connectinfo_stop
+      connectinfo_stop:
+        type: string
         physicalType: varchar(50)
-        logicalType: string
         description: Connection information when session stopped.
         classification: public
 
-      - name: acctinputoctets
+      acctinputoctets:
+        type: integer
         physicalType: bigint(20)
-        logicalType: integer
         description: Total number of input octets received during session.
         classification: public
 
-      - name: acctoutputoctets
+      acctoutputoctets:
+        type: integer
         physicalType: bigint(20)
-        logicalType: integer
         description: Total number of output octets sent during session.
         classification: public
 
-      - name: calledstationid
+      calledstationid:
+        type: string
         physicalType: varchar(50)
-        logicalType: string
         description: Identifier of the called station (e.g., access point MAC).
         classification: public
+        quality:
+          - type: library
+            metric: nullValues
+            description: calledstationid should not be null.
+            mustBeLessThan: 10
+            unit: percent
 
-      - name: callingstationid
+      callingstationid:
+        type: string
         physicalType: varchar(50)
-        logicalType: string
         description: Identifier of the calling station (e.g., client MAC).
         classification: restricted
+        quality:
+          - type: library
+            metric: nullValues
+            description: callingstationid should not be null.
+            mustBeLessThan: 10
+            unit: percent
 
-      - name: acctterminatecause
+      acctterminatecause:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
         description: Reason why session was terminated (e.g., User-Request, Lost-Carrier).
         classification: public
+        quality:
+          - type: library
+            metric: invalidValues
+            arguments:
+              validValues: [ 'User-Request', 'Admin-Reset', 'Host-Request', 'NAS-Error', 'Port-Error', 'Service-Unvaliable' ]
+            description: Ensure acctterminatecause uses valid RADIUS termination codes.
+            mustBeLessThan: 1
 
-      - name: servicetype
+      servicetype:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
         description: Type of service provided to the user.
         classification: public
 
-      - name: framedprotocol
+      framedprotocol:
+        type: string
         physicalType: varchar(32)
-        logicalType: string
         description: Framed protocol (e.g., PPP, SLIP).
         classification: public
 
-      - name: framedipv6address
+      framedipv6address:
+        type: string
         physicalType: varchar(45)
-        logicalType: string
         description: IPv6 address assigned to the session.
         classification: public
 
-      - name: framedipv6prefix
+      framedipv6prefix:
+        type: string
         physicalType: varchar(45)
-        logicalType: string
         description: IPv6 prefix for the session.
         classification: public
 
-      - name: framedinterfaceid
+      framedinterfaceid:
+        type: string
         physicalType: varchar(44)
-        logicalType: string
         description: Interface ID associated with IPv6.
         classification: public
 
-      - name: delegatedipv6prefix
+      delegatedipv6prefix:
+        type: string
         physicalType: varchar(45)
-        logicalType: string
         description: Delegated IPv6 prefix for downstream clients.
         classification: public
-      
-      - name: created_at
-        physicalType: TIMESTAMP
-        logicalType: datetime
-        description: Record creation timestamp.
+
+      created_at:
+        type: timestamp
+        physicalType: timestamp
         required: true
+        description: Record creation timestamp.
         classification: public
 
-    quality:
-      - rule: duplicationCheck
-        type: library
-        dimension: uniqueness
-        description: Ensure acctuniqueid is unique across all records.
-        severity: error 
-        mustBeLessThan: 1
-        unit: rows
-      - rule: nullCheck
-        type: library
-        description: Ensure acctstarttime and acctstoptime are not null for closed sessions.
-        dimension: completeness
-        severity: warning
-      - rule: logicalConsistency
-        type: library
-        description: Ensure acctstoptime >= acctstarttime when both exist.
-        dimension: consistency
-        severity: error
-      - rule: domainValueCheck
-        type: library
-        description: Ensure acctterminatecause uses valid RADIUS termination codes.
-        dimension: conformity
-        severity: warning
-        customProperties:
-          - property: ALLOWED_VALUES
-            value: [ 'User-Request', 'Admin-Reset', 'Host-Request', 'NAS-Error', 'Port-Error', 'Service-Unvaliable' ]
-      - rule: freshnessCheck
-        type: library
-        description: Ensure created_at is within the last hour.
-        dimension: timeliness
-        severity: info
+servicelevels:
+  freshness:
+      description: The age of the youngest row in a table.
+      threshold: 25h
+      timestampField: radacct.created_at
