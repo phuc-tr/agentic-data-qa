@@ -1,0 +1,61 @@
+{
+  "success": true,
+  "results": [
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_not_be_null",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column": "radacctid"
+        },
+        "meta": {
+          "check_id": "raddb:not_null:radacctid"
+        },
+        "id": "ec4c8ea6-9ed9-46f8-a3f2-3b2d200fee07",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    }
+  ],
+  "suite_name": "radacct_expectation_suite",
+  "suite_parameters": {},
+  "statistics": {
+    "evaluated_expectations": 1,
+    "successful_expectations": 1,
+    "unsuccessful_expectations": 0,
+    "success_percent": 100.0
+  },
+  "meta": {
+    "great_expectations_version": "1.9.1",
+    "batch_spec": {
+      "batch_data": "PandasDataFrame"
+    },
+    "batch_markers": {
+      "ge_load_time": "20251210T123748.539413Z",
+      "pandas_data_fingerprint": "5a4a57778cfc67e4d44ada36adab3933"
+    },
+    "active_batch_definition": {
+      "datasource_name": "my_pandas_datasource",
+      "data_connector_name": "fluent",
+      "data_asset_name": "pd_dataframe_asset",
+      "batch_identifiers": {
+        "dataframe": "<DATAFRAME>"
+      }
+    }
+  },
+  "id": null
+}
