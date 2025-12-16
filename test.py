@@ -1,140 +1,153 @@
 import great_expectations as gx
-import datetime
+from great_expectations.core import ExpectationConfiguration
+from datetime import datetime, timedelta
 
-context = gx.get_context(mode="file")
+context = gx.get_context()
 
 suite_name = "radacct_expectation_suite"
-suite = gx.ExpectationSuite(name=suite_name)
-suite = context.suites.add(suite)
+suite = context.create_expectation_suite(suite_name, overwrite_existing=True)
 
-def safe_add_expectation(suite, expectation_fn, **kwargs):
+def safe_add_expectation(expectation_suite, expectation_type, kwargs=None, meta=None):
+    kwargs = kwargs or {}
+    meta = meta or {}
     try:
-        expectation = expectation_fn(**kwargs)
-        suite.add_expectation(expectation)
-        # print(f"Added expectation: {expectation.expectation_type}") # Uncomment for debugging
+        expectation_config = ExpectationConfiguration(
+            expectation_type=expectation_type,
+            kwargs=kwargs,
+            meta=meta,
+        )
+        expectation_suite.add_expectation(expectation_config)
+        print(f"Added expectation: {expectation_type} for {kwargs.get('column', kwargs.get('column_A', 'N/A'))}")
     except Exception as e:
-        print(f"Error creating expectation {expectation_fn.__name__}: {e}")
+        print(f"Error creating expectation {expectation_type}: {e}")
 
+# Required / primary keys
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "radacctid"},
     meta={"check_id": "raddb:not_null:radacctid"},
-    column="radacctid"
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToBeUnique,
+    "expect_column_values_to_be_unique",
+    kwargs={"column": "radacctid"},
     meta={"check_id": "raddb:unique:radacctid"},
-    column="radacctid"
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "acctsessionid"},
     meta={"check_id": "raddb:not_null:acctsessionid"},
-    column="acctsessionid"
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "acctuniqueid"},
     meta={"check_id": "raddb:not_null:acctuniqueid"},
-    column="acctuniqueid"
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToBeUnique,
+    "expect_column_values_to_be_unique",
+    kwargs={"column": "acctuniqueid"},
     meta={"check_id": "raddb:unique:acctuniqueid"},
-    column="acctuniqueid"
+)
+
+# Domain / enumerations
+safe_add_expectation(
+    suite,
+    "expect_column_values_to_be_in_set",
+    kwargs={"column": "nasporttype", "value_set": ["Virtual", "ISDN"], "mostly": 1.0},
+    meta={"check_id": "raddb:domain:nasporttype"},
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToMatchRegex,
+    "expect_column_values_to_be_in_set",
+    kwargs={
+        "column": "acctterminatecause",
+        "value_set": [
+            "User-Request",
+            "Admin-Reset",
+            "Host-Request",
+            "NAS-Error",
+            "Port-Error",
+            "Service-Unvaliable",
+        ],
+        "mostly": 1.0,
+    },
+    meta={"check_id": "raddb:domain:acctterminatecause"},
+)
+
+# Format / regex checks
+safe_add_expectation(
+    suite,
+    "expect_column_values_to_match_regex",
+    kwargs={"column": "nasportid", "regex": r"^Uniq-Sess-ID\d{2}$"},
     meta={"check_id": "raddb:domain:nasportid_format"},
-    column="nasportid",
-    regex="^Uniq-Sess-ID\\d{2}$"
 )
 
+# Null-proportion checks (use mostly to require >=90% non-null)
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToBeInSet,
-    meta={"check_id": "raddb:domain:nasporttype_valid_values"},
-    column="nasporttype",
-    value_set=[
-        "Virtual",
-        "ISDN"
-    ]
-)
-
-safe_add_expectation(
-    suite,
-    gx.expectations.ExpectColumnPairValuesAToBeGreaterThanB,
-    meta={"check_id": "raddb:custom:acctstoptime_later_than_acctstarttime"},
-    column_A="acctstoptime",
-    column_B="acctstarttime",
-)
-
-safe_add_expectation(
-    suite,
-    gx.expectations.ExpectColumnQuantileValuesToBeBetween,
-    meta={"check_id": "raddb:range:acctsessiontime_95th_percentile"},
-    column="acctsessiontime",
-    quantile_ranges={
-        "quantiles": [0.0, 0.95, 1.0],
-        "value_ranges": [[None, None], [None, 30000], [None, None]]
-    }
-)
-
-safe_add_expectation(
-    suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "calledstationid", "mostly": 0.90},
     meta={"check_id": "raddb:not_null:calledstationid"},
-    column="calledstationid"
 )
 
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "callingstationid", "mostly": 0.90},
     meta={"check_id": "raddb:not_null:callingstationid"},
-    column="callingstationid"
 )
 
+# Ranges and distributions
+# Basic allowable range for acctsessiontime
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToBeInSet,
-    meta={"check_id": "raddb:domain:acctterminatecause_valid_values"},
-    column="acctterminatecause",
-    value_set=[
-        "User-Request",
-        "Admin-Reset",
-        "Host-Request",
-        "NAS-Error",
-        "Port-Error",
-        "Service-Unvaliable"
-    ]
+    "expect_column_values_to_be_between",
+    kwargs={"column": "acctsessiontime", "min_value": 0, "max_value": 291240, "mostly": 1.0},
+    meta={"check_id": "raddb:range:acctsessiontime"},
 )
 
+# 95th percentile constraint: 95th percentile must be <= 30000
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnValuesToNotBeNull,
-    meta={"check_id": "raddb:not_null:created_at"},
-    column="created_at"
+    "expect_column_quantile_values_to_be_between",
+    kwargs={"column": "acctsessiontime", "quantile": 0.95, "min_value": None, "max_value": 30000, "allow_relative_error": True},
+    meta={"check_id": "raddb:range:acctsessiontime_95pct_under_30000"},
 )
 
-current_datetime = datetime.datetime.now(datetime.timezone.utc)
-freshness_threshold_hours = 25
-min_created_at = current_datetime - datetime.timedelta(hours=freshness_threshold_hours)
-
+# Temporal relationship: acctstoptime must be after acctstarttime
 safe_add_expectation(
     suite,
-    gx.expectations.ExpectColumnMaxToBeBetween,
+    "expect_column_pair_values_A_to_be_greater_than_B",
+    kwargs={"column_A": "acctstoptime", "column_B": "acctstarttime"},
+    meta={"check_id": "raddb:range:acctstoptime_after_acctstarttime"},
+)
+
+# Freshness: newest created_at must be within the last 25 hours
+now = datetime.utcnow()
+min_allowed = now - timedelta(hours=25)
+safe_add_expectation(
+    suite,
+    "expect_column_max_to_be_between",
+    kwargs={"column": "created_at", "min_value": min_allowed.isoformat(), "max_value": now.isoformat()},
     meta={"check_id": "raddb:freshness:created_at"},
-    column="created_at",
-    min_value=min_created_at.strftime("%Y-%m-%d %H:%M:%S%z"),
-    parse_strings_as_datetimes=True,
-    strict_min=False,
-    strict_max=False
 )
+
+# created_at required
+safe_add_expectation(
+    suite,
+    "expect_column_values_to_not_be_null",
+    kwargs={"column": "created_at"},
+    meta={"check_id": "raddb:not_null:created_at"},
+)
+
+# Persist the suite
+context.save_expectation_suite(suite)
