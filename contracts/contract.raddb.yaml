@@ -23,7 +23,7 @@ servers:
     schema: public
 
 models:
-  raddb:
+  radacct:
     description: RADIUS Accounting Data Model
     type: table
     fields:
