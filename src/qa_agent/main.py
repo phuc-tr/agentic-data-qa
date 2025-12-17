@@ -53,9 +53,9 @@ def propose_quality_checks(data_contract: str, data_profile: str) -> str:
     return response.content
 
 @task
-def generate_quality_code(checks: str, framework: str) -> str:
+def generate_quality_code(checks: str, metadata:str, framework: str) -> str:
     response = model_coder.invoke(
-        GENERATE_GX_SUITE_TEMPLATE.format(proposals=checks)
+        GENERATE_GX_SUITE_TEMPLATE.format(proposals=checks, metadata=metadata)
     )
     return response.content
 
@@ -112,6 +112,7 @@ def run_python_file(filepath: str, max_attempts: int = 3) -> str:
         code = f.read()
 
     while attempt < max_attempts:
+        subprocess.run(["rm", "-rf", "gx"])
         proc = subprocess.run(["python", filepath], capture_output=True, text=True)
         if proc.returncode == 0:
             return code  # Successfully ran
@@ -121,7 +122,6 @@ def run_python_file(filepath: str, max_attempts: int = 3) -> str:
         code = extract_python_code(code)
         with open(filepath, "w") as f:
             f.write(code)
-        subprocess.run(["rm", "-rf", "gx"])  # cleanup
         attempt += 1
 
     raise RuntimeError("Failed to run generated code after multiple attempts.")
@@ -154,10 +154,15 @@ def workflow_entry(params: dict):
         data_profile = json.load(f)
     with open(contract) as f:
         data_contract = f.read()
+    with open(f"artifacts/metadata/{dataset}.schema_view.{run_id}.json") as f:
+        metadata = f.read()
 
     # Generate quality checks and code
     checks = propose_quality_checks(data_contract, data_profile).result()
-    code = generate_quality_code(checks, framework="Great Expectations").result()
+    with open(f"artifacts/proposals/{dataset}.{run_id}.json", "w") as f:
+        f.write(checks)
+
+    code = generate_quality_code(checks, metadata=metadata, framework="Great Expectations").result()
 
     # Load latest code and run gater
     latest_code = get_latest_code(

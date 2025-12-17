@@ -1,9 +1,150 @@
 GENERATE_CHECKS_PROMPT_TEMPLATE = """
-You are a Data Quality Engineer who writes precise, parameterized data quality checks.
+You are a Data Quality Engineer who writes precise, parameterized data quality checks that 
+will later on be converted into quality checks, 
+using frameworks such as sodacl and great expectation.
 
 Your task:
 
 1. Read the Data Contract, Schema, and Profile.
+2. For each field defined in the contract, map them into a check type:
+  - Nulls in required columns: "not_null"
+  - Duplicate values in unique column: "unique"
+  - Out-of-range numeric values: "range"
+  - Domain/OOV category violations: "domain"
+  - Freshness/staleness issues: "freshness"
+  - Foreign-key mismatches: "foreign_key"
+3. Prefer values explicitly defined in the contract, otherwise derive parameters from the profile  
+4. In the params field, specify parameters that are helpful to be converted to quality code.
+5. [params] Only when it's impossible to have numeric parameters, you can use "text" as a parameter. When doing this, avoid generic text, such as "<fieldname> must have valid value".
+6. Always generate checks that are inherted from the data contract.
+7. Do not make up checks that are not defined in the contract.
+
+Below are some example outputs. Remember to refer to the provided contract and adjust the checks accordingly:
+
+Example 1: Range check from contract
+Contract:
+```
+price:
+  ...
+  quality:
+    - type: text
+      description: 95% of prices must be less than 300
+```
+Checks:
+```
+[
+  {{
+    "column": "price",
+    "type": "range",
+    "params": {{ "min_value": 0, "max_value": 300 }},
+    "origin": "contract",
+    "threshold" : ">95%"
+  }}
+]
+```
+
+Example 2: Missing value checks from contract
+Contract:
+```
+properties:
+  - name: email_address
+    quality:
+      - metric: missingValues
+        arguments:
+          missingValues: [null, '', 'N/A', 'n/a']
+        mustBeLessThan: 5
+        unit: percent
+```
+Checks:
+```
+[
+  {{
+    "column": "email_address",
+    "type": "not_null",
+    "params": {{}},
+    "origin": "contract",
+    "threshold" : "<5%"
+  }}
+]
+```
+
+Example 3: Freshness check
+Contract:
+```
+freshness:
+  threshold: 30s
+  timestampField: creation_ts
+```
+
+Checks:
+```
+[
+  {{
+    "column": "creation_ts",
+    "type": "freshness",
+    "params": {{ "max_delay": "30s" }},
+    "origin": "contract",
+  }}
+]
+```
+
+Example 4: Domain check
+Contract:
+```
+country:
+  quality:
+    - metric: invalidValues
+      arguments:
+        validValues: ['US', 'DE', 'FR', 'IT']
+```
+
+Checks:
+```
+[
+  {{
+    "column": "country",
+    "type": "domain",
+    "params": {{ "allowed_set": ["US", "DE", "FR", "IT"] }},
+    "origin": "contract",
+  }}
+]
+```
+
+Example 5: Value check
+Contract:
+
+```
+company:
+  quality:
+    - type: text
+      description: Must end with Inc.
+```
+Checks:
+```
+[
+  {{
+    "column": "company",
+    "type": "domain",
+    "params": {{ "text": "Must ends with Inc." }},
+    "origin": "contract",
+  }}
+]
+```
+
+-------------------------
+Here's the contract and profile:
+-------------------------
+
+Contract:
+{contract}
+
+Profile:
+{profile}
+
+Provide ONLY the JSON array of data quality checks as per the schema above.
+"""
+
+"""
 2. For each field defined in the contract, only focus on those that define the quality field.
 3. Generate at least one data quality check for EACH quality field in the contract.
 4. Classify the quality issues such as:
@@ -224,13 +365,6 @@ ExpectTableRowCountToBeBetween
 ExpectTableRowCountToEqual
 ExpectTableRowCountToEqualOtherTable
 
-Known errors to avoid:
--------------------------
-Error creating expectation ExpectColumnValuesToBeBetween: 1 validation error for ExpectColumnValuesToBeBetween
-parse_strings_as_datetimes
-  extra fields not permitted (type=value_error.extra)
--------------------------
-
 Note:
 * The output should be valid Python code that can be executed within a Great Expectations DataContext.
 * Do not include any explanations or additional text.
@@ -241,6 +375,7 @@ Note:
 * Make you to give the correct parameters for each expectation based on the check details. If uncertain, use another expectation type that fits better.
 * For freshness checks, compare against the current date.
 * The suite should be named "radacct_expectation_suite"
+* Refer to the metadata to get the correct data type of each column
 
 Example output:
 ```
@@ -274,6 +409,9 @@ suite.add_expectation(
 
 Here are the data quality checks to convert:
 {proposals}
+
+Metadata for column types:
+{metadata}
 
 Output:
 """
@@ -432,6 +570,7 @@ When writing the pull request body, consider including:
 - A brief summary of the changes made in the new code (which new quality checks were added, modified, or removed)
 - The rationale behind these changes (why were these changes necessary or beneficial)
 - A summary of the validation results (how many checks passed, failed, any notable findings)
+- In the notable findings section, highlight the gap between observed data and the data contract 
 
 Old code:
 {old_code}
