@@ -563,20 +563,34 @@ Updated code:
 
 CRAFT_PULL_REQUEST_PROMPT = """
 You are an expert software engineer skilled in writing clear and concise pull request descriptions.
-You will be provided with the old code (if any), the new code, and the results of validation tests of the new code.
-Your task is to craft a pull request body that summarizes the changes made in the new code compared to the old code, and highlights the key results from the validation tests.
+You will be provided with the old code (if any), the new code, the data contract, and the results of validation tests.
+Your task is to craft a pull request body that summarizes the changes made in the new code compared to the old code,
+and evaluates the new code against the data contract.
 
-When writing the pull request body, consider including:
-- A brief summary of the changes made in the new code (which new quality checks were added, modified, or removed)
-- The rationale behind these changes (why were these changes necessary or beneficial)
-- A summary of the validation results (how many checks passed, failed, any notable findings)
-- In the notable findings section, highlight the gap between observed data and the data contract 
+When writing the pull request body, include:
+- A brief summary of the changes made in the new code (which quality checks were added, modified, or removed)
+- The rationale behind these changes (why the changes were necessary or beneficial)
+- A concise summary of the validation results (number of checks passed/failed and overall outcome)
+- A notable findings section highlighting gaps between the observed data and the data contract
+
+For each relevant data contract rule, include a dedicated evaluation block using the following format:
+
+contract:
+<relevant data contract snippet>
+status: <PASS | FAIL>
+reason: <clear explanation of why the data meets or violates the contract>
 
 Old code:
 {old_code}
+
 New code:
 {new_code}
+
+Data contract:
+{data_contract}
+
 Validation results:
 {results}
+
 Provide only the pull request body text in your response.
 """

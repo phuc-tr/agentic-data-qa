@@ -16,10 +16,10 @@ from qa_agent.langgraph_src.prompt import (
 from qa_agent.langgraph_src.utils import get_latest_code, extract_python_code
 from qa_agent.langgraph_src.validator import validate
 from qa_agent.langgraph_src.github_utils import (
-    get_app_token,
     create_branch,
     commit_files,
     create_pull_request,
+    get_github_client,
 )
 from langgraph.graph import add_messages
 from langchain.messages import SystemMessage, HumanMessage, ToolCall
@@ -93,12 +93,13 @@ def fix_errors_in_code(code: str, error_message: str) -> str:
     return response.content
 
 @task
-def craft_pr_body(results: dict, old_code: str, new_code: str) -> str:
+def craft_pr_body(results: dict, old_code: str, new_code: str, data_contract: str) -> str:
     response = model_writer.invoke(
         CRAFT_PULL_REQUEST_PROMPT.format(
             results=json.dumps(results, indent=2),
             old_code=old_code,
-            new_code=new_code
+            new_code=new_code,
+            data_contract=data_contract
         )
     )
     return response.content
@@ -195,21 +196,24 @@ def workflow_entry(params: dict):
 
         results = validate(run_id=run_id, dataset=dataset)
 
-        token = get_app_token(
-            app_id=getenv("GITHUB_APP_ID"),
-            installation_id=getenv("GITHUB_INSTALLATION_ID"),
-            private_key_path=getenv("GITHUB_PRIVATE_KEY_PATH")
-        )
+        # token = get_app_token(
+        #     app_id=getenv("GITHUB_APP_ID"),
+        #     installation_id=getenv("GITHUB_INSTALLATION_ID"),
+        #     private_key_path=getenv("GITHUB_PRIVATE_KEY_PATH")
+        # )
 
-        create_branch(token, owner, repo, branch, base_branch=base_branch)
-        commit_files(token, owner, repo, branch, {
+        gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
+        repo = gh.get_repo(f"{owner}/{repo}")
+
+        create_branch(repo, branch, base_branch=base_branch)
+        commit_files(repo, branch, {
             output_path: updated_code,
             "report.json": json.dumps(results, indent=2)
         }, "Automated update")
 
-        pr_body = craft_pr_body(results, latest_code, updated_code).result()
-        pr = create_pull_request(token, owner, repo, head=branch, base=base_branch, title="WIP: Automated update", body=pr_body, draft=True)
-        print(f"PR created: {pr['html_url']}")
+        pr_body = craft_pr_body(results, latest_code, updated_code, data_contract).result()
+        pr = create_pull_request(repo, head=branch, base=base_branch, title="WIP: Automated update", body=pr_body, draft=True)
+        print(f"✅ Pull request created: {pr.html_url}")
     else:
         print("❌ No update needed.")
         print(gater_response.rationale)
