@@ -374,7 +374,7 @@ Note:
 * You should try to create expectations for all checks where possible.
 * Make you to give the correct parameters for each expectation based on the check details. If uncertain, use another expectation type that fits better.
 * For freshness checks, compare against the current date.
-* The suite should be named "radacct_expectation_suite"
+* The suite should be named "expectation_suite"
 * Refer to the metadata to get the correct data type of each column
 
 Example output:
@@ -383,7 +383,7 @@ import great_expectations as gx
 
 context = gx.get_context(mode="file")
 
-suite_name = "radacct_expectation_suite"
+suite_name = "expectation_suite"
 suite = gx.ExpectationSuite(name=suite_name)
 suite = context.suites.add(suite)
 
@@ -416,19 +416,9 @@ Metadata for column types:
 Output:
 """
 
-FIX_ERROR_PROMPT = """
-You are given a piece of code that contains an error.
-Your task is to identify the error and fix it by rewriting the code.
+GENERATE_GX_SUITE_TEMPLATE_SINGLE = """
 
-Requirements:
-
-Return the entire corrected code, not just the modified or fixed section.
-
-Do not omit any parts of the original code unless necessary for the fix.
-
-Ensure the corrected code is complete, consistent, and ready to run.
-
-Do not include explanations unless explicitly asked; output only the full corrected code.
+Convert the data contract into a Great Expectations Expectation Suite in Python code. Each quality requirement in the contract should be represented as an expectation with appropriate parameters. Don't say anything else in your response.
 
 Expectation Types Reference:
 -------------------------
@@ -489,13 +479,73 @@ ExpectTableRowCountToBeBetween
 ExpectTableRowCountToEqual
 ExpectTableRowCountToEqualOtherTable
 
-The begining of the code should always start with:
+Note:
+* The output should be valid Python code that can be executed within a Great Expectations DataContext.
+* Do not include any explanations or additional text.
+* Refer to the following example output for context initialization
+* In the meta parameter, put a check_id derived from the contract (e.g., "contract:<column>:<type>")
+* You should try to create expectations for all quality requirements in the contract where possible.
+* Make sure to give the correct parameters for each expectation based on the contract details. If uncertain, use another expectation type that fits better.
+* For freshness checks, compare against the current date.
+* The suite should be named "expectation_suite"
+
+Example output:
 ```
 import great_expectations as gx
 
 context = gx.get_context(mode="file")
 
-suite_name = "radacct_expectation_suite"
+suite_name = "expectation_suite"
+suite = gx.ExpectationSuite(name=suite_name)
+suite = context.suites.add(suite)
+
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToNotBeNull(
+        meta={{"check_id": "contract:passenger_count:not_null"}},
+        column="passenger_count"
+    )
+)
+
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToBeBetween(
+        meta={{"check_id": "contract:fare_amount:range"}},
+        column="fare_amount",
+        min_value=0,
+        max_value=500
+    )
+)
+
+# ... add more expectations
+
+```
+
+Here is the data contract:
+{contract}
+
+Output:
+"""
+
+FIX_ERROR_PROMPT = """
+You are given a piece of code that contains an error.
+Your task is to identify the error and fix it by rewriting the code.
+
+Requirements:
+
+Return the entire corrected code, not just the modified or fixed section.
+
+Do not omit any parts of the original code unless necessary for the fix.
+
+Ensure the corrected code is complete, consistent, and ready to run.
+
+Do not include explanations; output only the full corrected code.
+
+The begining of the code should always start with. Do not change this code ever:
+```
+import great_expectations as gx
+
+context = gx.get_context(mode="file")
+
+suite_name = "expectation_suite"
 suite = gx.ExpectationSuite(name=suite_name)
 suite = context.suites.add(suite)
 ```

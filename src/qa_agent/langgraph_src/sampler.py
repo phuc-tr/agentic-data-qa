@@ -28,14 +28,21 @@ def load_data_contract(path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def get_first_table_name(contract: dict) -> str:
+def get_table_names(contract: dict) -> list[str]:
     """
-    Return the first model key from the data contract.
+    Return the table names from the data contract.
+    Handles both dict (keys as table names) and list (with 'name' field) formats.
+    Supports 'models' or 'schema' keys.
     """
-    models = contract.get("models")
-    if not models:
-        raise ValueError("No models defined in data contract")
-    return next(iter(models.keys()))
+    data = contract.get("models") or contract.get("schema")
+    if not data:
+        raise ValueError("No models or schema defined in data contract")
+    if isinstance(data, dict):
+        return list(data.keys())
+    elif isinstance(data, list):
+        return [model["name"] for model in data]
+    else:
+        raise ValueError("Models/schema should be dict or list")
 
 
 def sample(
@@ -59,59 +66,63 @@ def sample(
 
     engine = sqlalchemy.create_engine(uri)
 
-    # Take first model as table name
-    table_name = get_first_table_name(contract)
+    # Take all table names
+    table_names = get_table_names(contract)
+    print(f"Table names: {table_names}")
 
-    seed = 42
-    np.random.seed(seed)
-    sampling_rule = "time_window"
+    combined_profiles = {}
+    combined_schemas = {}
 
-    if sampling_rule == "hash_mod":
-        query = (
-            f"SELECT * FROM {table_name} "
-            f"WHERE MOD({table_name}id, 100) = 0 LIMIT 100;"
-        )
-    elif sampling_rule == "time_window":
-        query = (
-            f"SELECT * FROM {table_name} "
-            f"ORDER BY acctstarttime DESC LIMIT 100;"
-        )
-    else:
-        raise ValueError(f"Unknown sampling rule: {sampling_rule}")
+    for table_name in table_names:
+        seed = 42
+        np.random.seed(seed)
+        sampling_rule = "time_window"
 
-    df = pd.read_sql(query, engine)
+        if sampling_rule == "hash_mod":
+            query = (
+                f"SELECT * FROM {table_name} "
+                f"WHERE MOD({table_name}id, 100) = 0 LIMIT 100;"
+            )
+        elif sampling_rule == "time_window":
+            query = f"SELECT * FROM {table_name} LIMIT 100;"
+        else:
+            raise ValueError(f"Unknown sampling rule: {sampling_rule}")
 
-    # Save sample
-    sample_path = f"artifacts/samples/{dataset}.{run_id}.parquet"
-    df.to_parquet(sample_path, index=False)
-    print(f"Sample saved to {sample_path}")
+        df = pd.read_sql(query, engine)
 
-    # Build profile
-    profile = {
-        "row_count": len(df),
-        "null_rate": df.isnull().mean().to_dict(),
-        "distinct_ratio": {
-            c: df[c].nunique() / len(df) for c in df.columns
-        },
-        "p01": df.quantile(0.01, numeric_only=True).to_dict(),
-        "p99": df.quantile(0.99, numeric_only=True).to_dict(),
-        "freshness_days": (
-            datetime.now()
-            - pd.to_datetime(df["acctstarttime"].max())
-        ).days,
-    }
+        # Save sample
+        sample_path = f"artifacts/samples/{dataset}.{table_name}.{run_id}.parquet"
+        df.to_parquet(sample_path, index=False)
+        print(f"Sample saved to {sample_path}")
 
+        # Build profile
+        profile = {
+            "row_count": len(df),
+            "null_rate": df.isnull().mean().to_dict(),
+            "distinct_ratio": {
+                c: df[c].nunique() / len(df) for c in df.columns
+            },
+            "p01": df.quantile(0.01, numeric_only=True).to_dict(),
+            "p99": df.quantile(0.99, numeric_only=True).to_dict(),
+        }
+
+        combined_profiles[table_name] = profile
+
+        # Schema Metadata
+        schema_metadata = get_schema_view(engine, table_name, df)
+        combined_schemas[table_name] = schema_metadata
+
+    # Save combined profiles
     profile_path = f"artifacts/profiles/{dataset}.{run_id}.json"
     with open(profile_path, "w") as f:
-        json.dump(profile, f, indent=2)
-    print(f"Profile saved to {profile_path}")
+        json.dump(combined_profiles, f, indent=2)
+    print(f"Profiles saved to {profile_path}")
 
-    # Schema Metadata
-    schema_metadata = get_schema_view(engine, table_name, df)
+    # Save combined schemas
     schema_path = f"artifacts/metadata/{dataset}.schema_view.{run_id}.json"
     with open(schema_path, "w") as f:
-        json.dump(schema_metadata, f, indent=2)
-    print(f"Schema metadata saved to {schema_path}")
+        json.dump(combined_schemas, f, indent=2)
+    print(f"Schemas saved to {schema_path}")
 
 
 if __name__ == "__main__":

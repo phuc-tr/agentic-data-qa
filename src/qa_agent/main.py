@@ -8,6 +8,7 @@ from langchain.chat_models import init_chat_model
 from qa_agent.langgraph_src.prompt import (
     GENERATE_CHECKS_PROMPT_TEMPLATE,
     GENERATE_GX_SUITE_TEMPLATE,
+    GENERATE_GX_SUITE_TEMPLATE_SINGLE,
     GATER_PROMPT,
     UPDATE_CODE_PROMPT,
     CRAFT_PULL_REQUEST_PROMPT,
@@ -36,7 +37,7 @@ env_path = Path.cwd() / ".env"
 load_dotenv(env_path)
 
 # Initialize models
-model_coder = init_chat_model(model=getenv("CODER_MODEL", "gpt-5.1"))
+model_coder = init_chat_model(model=getenv("CODER_MODEL", "gpt-5.2"))
 model_writer = init_chat_model(model=getenv("WRITER_MODEL", "gpt-3.5-turbo"))
 
 class GaterOutput(BaseModel):
@@ -56,6 +57,13 @@ def propose_quality_checks(data_contract: str, data_profile: str) -> str:
 def generate_quality_code(checks: str, metadata:str, framework: str) -> str:
     response = model_coder.invoke(
         GENERATE_GX_SUITE_TEMPLATE.format(proposals=checks, metadata=metadata)
+    )
+    return response.content
+
+@task
+def generate_quality_code_single(contract: str) -> str:
+    response = model_coder.invoke(
+        GENERATE_GX_SUITE_TEMPLATE_SINGLE.format(contract=contract)
     )
     return response.content
 
@@ -106,7 +114,18 @@ def craft_pr_body(results: dict, old_code: str, new_code: str, data_contract: st
 
 # -------------------- HELPER -------------------- #
 
-def run_python_file(filepath: str, max_attempts: int = 3) -> str:
+def limit_dict_depth(data, max_depth: int = 4, current_depth: int = 0):
+    """Limit dictionary depth to specified levels."""
+    if current_depth >= max_depth:
+        return str(data) if not isinstance(data, (dict, list)) else "..."
+    
+    if isinstance(data, dict):
+        return {k: limit_dict_depth(v, max_depth, current_depth + 1) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [limit_dict_depth(item, max_depth, current_depth + 1) for item in data]
+    return data
+
+def run_python_file(filepath: str, max_attempts: int = 5) -> str:
     """Run a Python file and return output or attempt fixes."""
     attempt = 0
     with open(filepath, "r") as f:
@@ -131,92 +150,121 @@ def run_python_file(filepath: str, max_attempts: int = 3) -> str:
 
 @entrypoint()
 def workflow_entry(params: dict):
-    owner = params["owner"]
-    repo = params["repo"]
-    dataset = params["dataset"]
-    output_path = params["output_path"]
-    contract = params["contract"]
+    mode = params.get("mode", "default")
+    owner, repo, dataset = params["owner"], params["repo"], params["dataset"]
+    output_path, contract = params["output_path"], params["contract"]
     base_branch = params.get("base_branch", "main")
+    run_id = params.get("run_id") or datetime.now().strftime("%Y%m%d%H%M%S")
 
-    run_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    # Run sampler unless run_id is provided
+    if not params.get("run_id"):
+        Path('artifacts/samples').mkdir(parents=True, exist_ok=True)
+        Path('artifacts/profiles').mkdir(parents=True, exist_ok=True)
+        Path('artifacts/metadata').mkdir(parents=True, exist_ok=True)
+        Path('artifacts/proposals').mkdir(parents=True, exist_ok=True)
+        Path('artifacts/failing_examples').mkdir(parents=True, exist_ok=True)
+        Path('artifacts/sandbox').mkdir(parents=True, exist_ok=True)
 
-    # Run sampler
-    Path('artifacts/samples').mkdir(parents=True, exist_ok=True)
-    Path('artifacts/profiles').mkdir(parents=True, exist_ok=True)
-    Path('artifacts/metadata').mkdir(parents=True, exist_ok=True)
-    Path('artifacts/proposals').mkdir(parents=True, exist_ok=True)
-    Path('artifacts/failing_examples').mkdir(parents=True, exist_ok=True)
-    Path('artifacts/sandbox').mkdir(parents=True, exist_ok=True)
+        sampler.sample(dataset=dataset, data_contract=contract, run_id=run_id)
 
-    sampler.sample(dataset=dataset, data_contract=contract, run_id=run_id)
-
-    # Load profiles & contracts
-    with open(f"artifacts/profiles/{dataset}.{run_id}.json") as f:
-        data_profile = json.load(f)
     with open(contract) as f:
         data_contract = f.read()
-    with open(f"artifacts/metadata/{dataset}.schema_view.{run_id}.json") as f:
-        metadata = f.read()
 
-    # Generate quality checks and code
-    checks = propose_quality_checks(data_contract, data_profile).result()
-    with open(f"artifacts/proposals/{dataset}.{run_id}.json", "w") as f:
-        f.write(checks)
-
-    code = generate_quality_code(checks, metadata=metadata, framework="Great Expectations").result()
-
-    # Load latest code and run gater
-    latest_code = get_latest_code(
-        filepath=f"expectations/{dataset}_suite.py",
-        repo_name=f"{owner}/{repo}",
-        branch=base_branch
-    )
-
-    gater_response = gater(
-        contract=data_contract,
-        latest_code=latest_code,
-        expectation_snippets=code
-    ).result()
-
-    if gater_response.update_needed:
-        print("✅ Update needed.")
-        branch = f"bot/{run_id}"
-        updated_code = update_expectation_suite(
-            contract=data_contract,
-            latest_code=latest_code,
-            expectation_snippets=code
-        ).result()
-
-        updated_code = extract_python_code(updated_code)
+    if mode == "single":
+        code = generate_quality_code_single(contract=data_contract).result()
+        code = extract_python_code(code)
+        # 2. Craft PR and Push (Skipping validation/sampling)
+        gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
+        repo_obj = gh.get_repo(f"{owner}/{repo}")
+        branch = f"bot/single-{run_id}"
 
         with open(output_path, "w") as f:
-            f.write(updated_code)
-
-        updated_code = run_python_file(output_path)  # Ensure code runs
-
-        results = validate(run_id=run_id, dataset=dataset)
-
-        # token = get_app_token(
-        #     app_id=getenv("GITHUB_APP_ID"),
-        #     installation_id=getenv("GITHUB_INSTALLATION_ID"),
-        #     private_key_path=getenv("GITHUB_PRIVATE_KEY_PATH")
-        # )
-
-        gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
-        repo = gh.get_repo(f"{owner}/{repo}")
-
-        create_branch(repo, branch, base_branch=base_branch)
-        commit_files(repo, branch, {
-            output_path: updated_code,
-            "report.json": json.dumps(results, indent=2)
-        }, "Automated update")
-
-        pr_body = craft_pr_body(results, latest_code, updated_code, data_contract).result()
-        pr = create_pull_request(repo, head=branch, base=base_branch, title="WIP: Automated update", body=pr_body, draft=True)
+            f.write(code)
+        
+        create_branch(repo_obj, branch, base_branch=base_branch)
+        commit_files(repo_obj, branch, {output_path: code}, "Single-agent update")
+        
+        pr_body = f"Automated Great Expectations suite generated from contract: {contract}"
+        pr = create_pull_request(repo_obj, head=branch, base=base_branch, title="Auto-GX: Single Mode", body=pr_body, draft=True)
         print(f"✅ Pull request created: {pr.html_url}")
     else:
-        print("❌ No update needed.")
-        print(gater_response.rationale)
+        if params.get("run_id"):
+            # Skip generation, assume code is at output_path
+            with open(output_path, "r") as f:
+                updated_code = f.read()
+            results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
+
+            gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
+            repo = gh.get_repo(f"{owner}/{repo}")
+            branch = f"bot/{run_id}"
+            create_branch(repo, branch, base_branch=base_branch)
+            commit_files(repo, branch, {
+                "report.json": json.dumps(results, indent=2)
+            }, "Validation results")
+            pr_body = f"Validation results for run {run_id}"
+            pr = create_pull_request(repo, head=branch, base=base_branch, title="Validation Report", body=pr_body, draft=True)
+            print(f"✅ Pull request created: {pr.html_url}")
+        else:
+            # Load profiles & contracts
+            with open(f"artifacts/profiles/{dataset}.{run_id}.json") as f:
+                data_profile = json.load(f)
+            with open(f"artifacts/metadata/{dataset}.schema_view.{run_id}.json") as f:
+                metadata = f.read()
+
+            # Generate quality checks and code
+            checks = propose_quality_checks(data_contract, data_profile).result()
+            with open(f"artifacts/proposals/{dataset}.{run_id}.json", "w") as f:
+                f.write(checks)
+
+            code = generate_quality_code(checks, metadata=metadata, framework="Great Expectations").result()
+
+            # Load latest code and run gater
+            latest_code = get_latest_code(
+                filepath=f"expectations/{dataset}_suite.py",
+                repo_name=f"{owner}/{repo}",
+                branch=base_branch
+            )
+
+            gater_response = gater(
+                contract=data_contract,
+                latest_code=latest_code,
+                expectation_snippets=code
+            ).result()
+
+            if gater_response.update_needed:
+                print("✅ Update needed.")
+                branch = f"bot/{run_id}"
+                updated_code = update_expectation_suite(
+                    contract=data_contract,
+                    latest_code=latest_code,
+                    expectation_snippets=code
+                ).result()
+
+                updated_code = extract_python_code(updated_code)
+
+                with open(output_path, "w") as f:
+                    f.write(updated_code)
+
+                updated_code = run_python_file(output_path)  # Ensure code runs
+
+                results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
+                pr_results = limit_dict_depth(results, max_depth=2)
+
+                gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
+                repo = gh.get_repo(f"{owner}/{repo}")
+
+                create_branch(repo, branch, base_branch=base_branch)
+                commit_files(repo, branch, {
+                    output_path: updated_code,
+                    "report.json": json.dumps(results, indent=2)
+                }, "Automated update")
+
+                pr_body = craft_pr_body(pr_results, latest_code, updated_code, data_contract).result()
+                pr = create_pull_request(repo, head=branch, base=base_branch, title="WIP: Automated update", body=pr_body, draft=True)
+                print(f"✅ Pull request created: {pr.html_url}")
+            else:
+                print("❌ No update needed.")
+                print(gater_response.rationale)
 
 
 import argparse
@@ -228,6 +276,8 @@ def main():
     parser.add_argument("--output_path", required=1)
     parser.add_argument("--contract", required=1)
     parser.add_argument("--base_branch", default='main')
+    parser.add_argument("--mode", default='default')
+    parser.add_argument("--run_id")
     args = parser.parse_args()
 
     workflow_entry.invoke({
@@ -237,6 +287,8 @@ def main():
         "output_path": args.output_path,
         "contract": args.contract,
         "base_branch": args.base_branch,
+        "mode": args.mode,
+        "run_id": args.run_id,
     })
 
 if __name__ == "__main__":
