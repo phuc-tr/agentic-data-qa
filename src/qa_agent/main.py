@@ -173,18 +173,28 @@ def workflow_entry(params: dict):
     if mode == "single":
         code = generate_quality_code_single(contract=data_contract).result()
         code = extract_python_code(code)
-        # 2. Craft PR and Push (Skipping validation/sampling)
+
+        with open(output_path, "w") as f:
+            f.write(code)
+
+        # Verify generated code runs before committing
+        updated_code = run_python_file(output_path, 1)
+
+        # Validate generated expectations against sampled data
+        results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
+        pr_results = limit_dict_depth(results, max_depth=2)
+
         gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
         repo_obj = gh.get_repo(f"{owner}/{repo}")
         branch = f"bot/single-{run_id}"
 
-        with open(output_path, "w") as f:
-            f.write(code)
-        
         create_branch(repo_obj, branch, base_branch=base_branch)
-        commit_files(repo_obj, branch, {output_path: code}, "Single-agent update")
-        
-        pr_body = f"Automated Great Expectations suite generated from contract: {contract}"
+        commit_files(repo_obj, branch, {
+            output_path: code,
+            "report.json": json.dumps(results, indent=2)
+        }, "Single-agent update")
+
+        pr_body = f"Automated Great Expectations suite generated from contract: {contract}\n\nValidation summary\n{json.dumps(pr_results, indent=2)}"
         pr = create_pull_request(repo_obj, head=branch, base=base_branch, title="Auto-GX: Single Mode", body=pr_body, draft=True)
         print(f"✅ Pull request created: {pr.html_url}")
     else:

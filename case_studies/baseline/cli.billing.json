@@ -1,0 +1,2111 @@
+{
+  "name": "billing_history.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "phone",
+          "planId",
+          "billAmount",
+          "billAction",
+          "billPerformer",
+          "billReason",
+          "paymentmethod",
+          "bounce",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "phone",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "phone",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planId",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "billAmount",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "billAmount",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "billAction",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "billAction",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "billPerformer",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "billPerformer",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "billReason",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "billReason",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "paymentmethod",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "paymentmethod",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "bounce",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "billing_plans.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "planName",
+          "sharing",
+          "planType",
+          "planBandwidthUp",
+          "planBandwidthDown",
+          "planTrafficTotal",
+          "planTrafficUp",
+          "planTrafficDown",
+          "planTrafficRefillCost",
+          "planRecurring",
+          "planRecurringPeriod",
+          "planRecurringBillingSchedule",
+          "planCost",
+          "planSetupCost",
+          "planTax",
+          "planCurrency",
+          "planActive",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planName",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "planName"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planName",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "sharing",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planType",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planType",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planBandwidthUp",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planBandwidthUp",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planBandwidthDown",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planBandwidthDown",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planTrafficTotal",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planTrafficTotal",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planTrafficUp",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planTrafficUp",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planTrafficDown",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planTrafficDown",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planTrafficRefillCost",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planTrafficRefillCost",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planRecurring",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planRecurring",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planRecurringPeriod",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planRecurringPeriod",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planRecurringBillingSchedule",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planRecurringBillingSchedule",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planCost",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planCost",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planSetupCost",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planSetupCost",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planTax",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planTax",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planCurrency",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planCurrency",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "planActive",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "planActive",
+        "min_value": null,
+        "max_value": 32
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "financial_summary.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "finDate",
+          "total",
+          "num_trans",
+          "num_customers",
+          "note"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "finDate",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "finDate",
+        "min_value": null,
+        "max_value": 50
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "total",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "total",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "num_trans",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "num_trans",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "num_customers",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "num_customers",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "note",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "note",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "invoice.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "user_id",
+          "plan_id",
+          "date",
+          "amount",
+          "tax_amount",
+          "total",
+          "statusId",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby",
+          "discount",
+          "btype",
+          "nid",
+          "prefix",
+          "generationid",
+          "offerName"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "user_id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "plan_id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "date",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "amount",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "amount",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "tax_amount",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "tax_amount",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "total",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "total",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "statusId",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "discount",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "discount",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "btype",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "btype",
+        "min_value": null,
+        "max_value": 3
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "nid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "prefix",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "prefix",
+        "min_value": null,
+        "max_value": 2
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "generationid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "offerName",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "offerName",
+        "min_value": null,
+        "max_value": 150
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "invoice_status.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "value",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "value",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "value",
+        "min_value": null,
+        "max_value": 32
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "payment.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "invoice_id",
+          "amount",
+          "date",
+          "type_id",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "invoice_id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "amount",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "amount",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "date",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "type_id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "payment_type.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "value",
+          "notes",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "value",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "value",
+        "min_value": null,
+        "max_value": 32
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "notes",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "notes",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "prepaid_transaction.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "balance_before",
+          "amount",
+          "bounce",
+          "allowance",
+          "balance_current",
+          "due_date",
+          "userID",
+          "trans_status",
+          "creationdate",
+          "note",
+          "type"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "balance_before",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "amount",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "bounce",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "bounce",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "allowance",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "balance_current",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "due_date",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "userID",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "trans_status",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "note",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "note",
+        "min_value": null,
+        "max_value": 250
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "type",
+        "type_": "integer"
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "tblcampaign.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "Name",
+          "value",
+          "cstatus",
+          "cstart",
+          "cend",
+          "speeds",
+          "description",
+          "creationdate",
+          "creationby",
+          "updatedate",
+          "updateby",
+          "period"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "Name",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "Name"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "Name",
+        "min_value": null,
+        "max_value": 255
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "value",
+        "type_": "number"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "value",
+        "min_value": 0,
+        "max_value": 1
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "cstatus",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "cstatus",
+        "min_value": null,
+        "max_value": 200
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "cstart",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "cend",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "speeds",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "description",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "description",
+        "min_value": null,
+        "max_value": 255
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "creationby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updatedate",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "updateby",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "updateby",
+        "min_value": null,
+        "max_value": 128
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "period",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "period",
+        "min_value": 0,
+        "max_value": null
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "tblgeneration.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "gid",
+          "gdate",
+          "gtime",
+          "month",
+          "note"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "gid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "gid"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "gid",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "gdate",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "gtime",
+        "type_": "time"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "month",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "month",
+        "min_value": null,
+        "max_value": 10
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "note",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "note",
+        "min_value": null,
+        "max_value": 250
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "tbllinetype.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "transtype",
+          "creationdate"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "transtype",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "transtype",
+        "min_value": null,
+        "max_value": 50
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "creationdate",
+        "type_": "date"
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}
+{
+  "name": "tbllinetransactions.None",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "id",
+          "transdate",
+          "transtime",
+          "typeid",
+          "billid",
+          "description"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "id",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "id"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "id",
+        "min_value": 1,
+        "max_value": null
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "transdate",
+        "type_": "date"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "transtime",
+        "type_": "time"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "typeid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "billid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "description",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "description",
+        "min_value": null,
+        "max_value": 255
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}

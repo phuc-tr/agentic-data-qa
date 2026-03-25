@@ -2,20 +2,21 @@ from datetime import datetime
 import json
 import yaml
 import sqlalchemy
-import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import numpy as np
 
 
-def get_schema_view(engine, table_name: str, df: pd.DataFrame) -> dict:
+def get_schema_view(engine, table_name: str, table: pa.Table) -> dict:
     """
-    Returns schema metadata comparing declared DB types vs observed DataFrame types.
+    Returns schema metadata comparing declared DB types vs observed pyarrow types.
     """
     insp = sqlalchemy.inspect(engine)
     declared_types = {
         col["name"]: str(col["type"])
         for col in insp.get_columns(table_name)
     }
-    observed_types = {c: str(dtype) for c, dtype in df.dtypes.items()}
+    observed_types = {field.name: str(field.type) for field in table.schema}
 
     return {
         "declared_types": declared_types,
@@ -88,41 +89,124 @@ def sample(
         else:
             raise ValueError(f"Unknown sampling rule: {sampling_rule}")
 
-        df = pd.read_sql(query, engine)
+        # Execute query and convert to pyarrow Table
+        with engine.connect() as conn:
+            result = conn.execute(sqlalchemy.text(query))
+            columns = result.keys()
+            rows = result.fetchall()
 
-        # Save sample
+        # Convert to pyarrow Table with type safety
+        data_dict = {col: [] for col in columns}
+        for row in rows:
+            for i, col in enumerate(columns):
+                data_dict[col].append(row[i])
+        
+        try:
+            # Try to infer types from data
+            table = pa.table(data_dict)
+        except (pa.ArrowTypeError, pa.ArrowInvalid, TypeError) as e:
+            print(f"Warning: Type inference failed for {table_name}, converting to strings: {e}")
+            # Fallback: convert all values to strings
+            safe_dict = {}
+            for col, values in data_dict.items():
+                safe_dict[col] = [str(v) if v is not None else None for v in values]
+            table = pa.table(safe_dict)
+
+        # Save sample using pyarrow parquet with error handling
         sample_path = f"artifacts/samples/{dataset}.{table_name}.{run_id}.parquet"
-        df.to_parquet(sample_path, index=False)
-        print(f"Sample saved to {sample_path}")
+        try:
+            pq.write_table(table, sample_path)
+            print(f"Sample saved to {sample_path}")
+        except Exception as e:
+            print(f"Error writing parquet for {table_name}: {e}")
+            # Fallback: try converting all columns to string type
+            safe_table = table.select([
+                pa.compute.cast(table[col], pa.string()) if not pa.types.is_string(table[col].type) 
+                else table[col]
+                for col in table.column_names
+            ])
+            pq.write_table(safe_table, sample_path)
+            print(f"Sample saved to {sample_path} (with string conversion)")
 
         # Build profile
         profile = {
-            "row_count": len(df),
-            "null_rate": df.isnull().mean().to_dict(),
-            "distinct_ratio": {
-                c: df[c].nunique() / len(df) for c in df.columns
-            },
-            "p01": df.quantile(0.01, numeric_only=True).to_dict(),
-            "p99": df.quantile(0.99, numeric_only=True).to_dict(),
+            "row_count": len(table),
+            "null_rate": {},
+            "distinct_ratio": {},
+            "p01": {},
+            "p99": {},
         }
+        
+        for col in table.column_names:
+            try:
+                col_data = table.column(col)
+                # Null rate
+                null_count = col_data.null_count
+                profile["null_rate"][col] = float(null_count) / len(table)
+                
+                # Distinct ratio (safe compute)
+                try:
+                    unique_vals = pa.compute.unique(col_data)
+                    distinct_count = int(pa.compute.count(unique_vals))
+                    profile["distinct_ratio"][col] = float(distinct_count) / len(table)
+                except Exception as e:
+                    print(f"Warning: Could not compute distinct ratio for {col}: {e}")
+                    profile["distinct_ratio"][col] = None
+                    
+            except Exception as e:
+                print(f"Warning: Error processing column {col}: {e}")
+                profile["null_rate"][col] = None
+                profile["distinct_ratio"][col] = None
+
+        # Add quantiles for numeric columns only
+        for col in table.column_names:
+            col_data = table.column(col)
+            # Only compute quantiles for integer or float types
+            if pa.types.is_integer(col_data.type) or pa.types.is_floating(col_data.type):
+                try:
+                    # Filter out nulls and get sorted values
+                    valid_mask = pa.compute.invert(pa.compute.is_null(col_data))
+                    valid_data = pa.compute.filter(col_data, valid_mask)
+                    if len(valid_data) > 0:
+                        sorted_indices = pa.compute.sort_indices(valid_data)
+                        idx_01 = max(0, int(len(valid_data) * 0.01) - 1)
+                        idx_99 = min(len(valid_data) - 1, int(len(valid_data) * 0.99))
+                        p01_idx = int(sorted_indices[idx_01].as_py())
+                        p99_idx = int(sorted_indices[idx_99].as_py())
+                        profile["p01"][col] = float(valid_data[p01_idx].as_py())
+                        profile["p99"][col] = float(valid_data[p99_idx].as_py())
+                except Exception as e:
+                    print(f"Warning: Could not compute quantiles for {col}: {e}")
+                    profile["p01"][col] = None
+                    profile["p99"][col] = None
 
         combined_profiles[table_name] = profile
 
         # Schema Metadata
-        schema_metadata = get_schema_view(engine, table_name, df)
-        combined_schemas[table_name] = schema_metadata
+        try:
+            schema_metadata = get_schema_view(engine, table_name, table)
+            combined_schemas[table_name] = schema_metadata
+        except Exception as e:
+            print(f"Warning: Could not generate schema metadata for {table_name}: {e}")
+            combined_schemas[table_name] = {"error": str(e)}
 
     # Save combined profiles
     profile_path = f"artifacts/profiles/{dataset}.{run_id}.json"
-    with open(profile_path, "w") as f:
-        json.dump(combined_profiles, f, indent=2)
-    print(f"Profiles saved to {profile_path}")
+    try:
+        with open(profile_path, "w") as f:
+            json.dump(combined_profiles, f, indent=2, default=str)
+        print(f"Profiles saved to {profile_path}")
+    except Exception as e:
+        print(f"Error saving profiles to {profile_path}: {e}")
 
     # Save combined schemas
     schema_path = f"artifacts/metadata/{dataset}.schema_view.{run_id}.json"
-    with open(schema_path, "w") as f:
-        json.dump(combined_schemas, f, indent=2)
-    print(f"Schemas saved to {schema_path}")
+    try:
+        with open(schema_path, "w") as f:
+            json.dump(combined_schemas, f, indent=2, default=str)
+        print(f"Schemas saved to {schema_path}")
+    except Exception as e:
+        print(f"Error saving schemas to {schema_path}: {e}")
 
 
 if __name__ == "__main__":

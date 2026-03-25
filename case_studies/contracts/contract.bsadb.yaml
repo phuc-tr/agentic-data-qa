@@ -1,0 +1,468 @@
+dataContractSpecification: "1.2.1"
+id: "ticketing_system_contract"
+info:
+  title: "Ticketing System Data Contract"
+  version: "1.1.0"
+  description: "Data contract covering ticket lifecycle, notes, follow-ups, priorities, statuses, and transactions with standardized relationship definitions."
+  owner: "data-team@example.com"
+
+servers:
+  mysql:
+    server: mysql
+    type: mysql
+    host: localhost
+    port: 3306
+    username: root
+    password: 123
+    database: bsadb
+    schema: public
+
+models:
+
+  ticket:
+    description: Core ticket table tracking the full lifecycle of each support ticket.
+    type: table
+    fields:
+
+      ticket_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for each ticket.
+        classification: public
+
+      ticket_customer_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        description: Reference to the customer who raised the ticket.
+        classification: public
+        references: users.user_id
+
+      ticket_status_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        description: Current status of the ticket.
+        classification: public
+        references: ticket_status.ticket_status_id
+        quality:
+          - type: text
+            description: ticket_status_id must exist in ticket_status.
+
+      ticket_type_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        description: Type/category of the ticket.
+        classification: public
+        references: ticket_type.ticket_type_id
+        quality:
+          - type: text
+            description: ticket_type_id must exist in ticket_type.
+
+      ticket_description:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Free-text description of the ticket issue.
+        classification: public
+
+      ticket_priority_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        description: Priority level assigned to the ticket.
+        classification: public
+        references: ticket_priority.ticket_priority_id
+        quality:
+          - type: text
+            description: ticket_priority_id must exist in ticket_priority.
+
+      ticket_owner_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        description: User who owns the ticket.
+        classification: public
+        references: users.user_id
+
+      ticket_assignedto_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: User the ticket is currently assigned to.
+        classification: public
+        references: users.user_id
+
+      ticket_creationdate:
+        type: date
+        physicalType: date
+        required: true
+        description: Date the ticket was created.
+        classification: public
+        quality:
+          - type: text
+            description: ticket_creationdate must not be null.
+
+      ticket_creationtime:
+        type: time
+        physicalType: time
+        required: true
+        description: Time the ticket was created.
+        classification: public
+        quality:
+          - type: text
+            description: ticket_creationtime must not be null.
+
+      ticket_closed_by_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: User who closed the ticket.
+        classification: public
+        references: users.user_id
+
+      ticket_closedate:
+        type: date
+        physicalType: date
+        required: false
+        description: Date the ticket was closed.
+        classification: public
+        quality:
+          - type: text
+            description: ticket_closedate must be present when ticket_status_id = 2 (closed).
+
+      ticket_closetime:
+        type: time
+        physicalType: time
+        required: false
+        description: Time the ticket was closed.
+        classification: public
+
+      ticket_updated_by_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: User who last updated the ticket.
+        classification: public
+        references: users.user_id
+
+      ticket_updated_date:
+        type: timestamp
+        physicalType: datetime
+        required: false
+        description: Datetime of the last ticket update.
+        classification: public
+
+      ticket_note:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Inline note attached to the ticket. Max 1000 characters.
+        classification: public
+
+      ticket_followup_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: Reference to the follow-up record for this ticket.
+        classification: public
+        references: ticket_followup.id
+
+  ticket_status:
+    description: Lookup table for ticket status values.
+    type: table
+    fields:
+
+      ticket_status_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the ticket status.
+        classification: public
+
+      ticket_status_name:
+        type: string
+        physicalType: varchar(255)
+        required: false
+        description: Human-readable name of the status.
+        classification: public
+
+      ticket_status_desc:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Description of what this status means.
+        classification: public
+
+      creation_date:
+        type: date
+        physicalType: date
+        required: false
+        description: Date this status entry was created.
+        classification: public
+
+  ticket_type:
+    description: Lookup table for ticket type/category values.
+    type: table
+    fields:
+
+      ticket_type_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the ticket type.
+        classification: public
+
+      ticket_type_name:
+        type: string
+        physicalType: varchar(255)
+        required: true
+        description: Human-readable name of the ticket type.
+        classification: public
+
+      ticket_type_desc:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Description of this ticket type.
+        classification: public
+
+      creation_date:
+        type: date
+        physicalType: date
+        required: false
+        description: Date this type entry was created.
+        classification: public
+
+  ticket_priority:
+    description: Lookup table for ticket priority levels.
+    type: table
+    fields:
+
+      ticket_priority_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the priority level.
+        classification: public
+
+      ticket_priority_type:
+        type: string
+        physicalType: varchar(255)
+        required: false
+        description: Name or label for this priority level (e.g., Low, Medium, High).
+        classification: public
+
+      ticket_creation_date:
+        type: date
+        physicalType: date
+        required: false
+        description: Date this priority entry was created.
+        classification: public
+
+  ticket_followup:
+    description: Lookup table for ticket follow-up actions.
+    type: table
+    fields:
+
+      id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the follow-up record.
+        classification: public
+
+      ticket_followup:
+        type: string
+        physicalType: varchar(255)
+        required: false
+        description: Short label for this follow-up action.
+        classification: public
+
+      ticket_followup_desc:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Detailed description of the follow-up action.
+        classification: public
+
+      creationdate:
+        type: date
+        physicalType: date
+        required: false
+        description: Date this follow-up entry was created.
+        classification: public
+
+  ticket_note:
+    description: Individual notes recorded against a ticket.
+    type: table
+    fields:
+
+      ticket_note_id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the note.
+        classification: public
+
+      ticket_note_details:
+        type: string
+        physicalType: text
+        required: false
+        description: Full text content of the note.
+        classification: public
+
+      ticket_creationdate:
+        type: date
+        physicalType: date
+        required: false
+        description: Date the note was created.
+        classification: public
+
+      creationtime:
+        type: time
+        physicalType: time
+        required: false
+        description: Time the note was created.
+        classification: public
+
+      ticket_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: Reference to the ticket this note belongs to.
+        classification: public
+        references: ticket.ticket_id
+
+      userid:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: Reference to the user who wrote the note.
+        classification: public
+        references: users.user_id
+
+      note_type:
+        type: string
+        physicalType: varchar(50)
+        required: false
+        default: "normal"
+        description: Category of the note. Defaults to 'normal'.
+        classification: public
+        references: ticket_note_type.note_type
+        quality:
+          - type: text
+            description: note_type must exist in ticket_note_type.
+
+  ticket_note_type:
+    description: Lookup table for note type classifications.
+    type: table
+    fields:
+
+      id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the note type.
+        classification: public
+
+      note_type:
+        type: string
+        physicalType: varchar(50)
+        required: false
+        description: Short code or label for this note type.
+        classification: public
+
+      note_type_desc:
+        type: string
+        physicalType: varchar(1000)
+        required: false
+        description: Description of this note type.
+        classification: public
+
+      creationdate:
+        type: date
+        physicalType: date
+        required: false
+        description: Date this note type entry was created.
+        classification: public
+
+  ticket_transactions:
+    description: Audit log of all changes and actions performed on tickets.
+    type: table
+    fields:
+
+      id:
+        type: integer
+        physicalType: int(11)
+        required: true
+        unique: true
+        primaryKey: true
+        description: Unique identifier for the transaction record.
+        classification: public
+
+      ticket_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: Reference to the ticket this transaction relates to.
+        classification: public
+        references: ticket.ticket_id
+
+      user_id:
+        type: integer
+        physicalType: int(11)
+        required: false
+        description: Reference to the user who performed the action.
+        classification: public
+        references: users.user_id
+
+      ticket_trans_summury:
+        type: string
+        physicalType: varchar(255)
+        required: false
+        description: Summary of the transaction or change made
+        classification: public
+
+      ticket_trans_creation_date:
+        type: date
+        physicalType: date
+        required: false
+        description: Date the transaction was recorded.
+        classification: public
+
+      ticket_trans_creation_time:
+        type: time
+        physicalType: time
+        required: false
+        description: Time the transaction was recorded.
+        classification: public
+
+      ticket_trans_note:
+        type: string
+        physicalType: text
+        required: false
+        description: Additional notes or detail about the transaction.
+        classification: public
+
+servicelevels:
+  freshness:
+    description: Ticket data should be no older than 25 hours.
+    threshold: 25h
+    timestampField: ticket.ticket_updated_date

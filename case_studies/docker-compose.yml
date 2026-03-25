@@ -1,0 +1,23 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      # MYSQL_DATABASE: raddb
+    ports:
+      - "3306:3306"
+    volumes:
+     - ./mysql-dump:/docker-entrypoint-initdb.d
+    container_name: mysql_db
+    healthcheck:
+      test: ["CMD", 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p$$MYSQL_ROOT_PASSWORD' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dataloader:
+    build: ./dataloader
+    depends_on:
+      db:
+        condition: service_healthy

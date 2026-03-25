@@ -1,0 +1,770 @@
+dataContractSpecification: "1.0.0"
+
+id: "billing-db-contract-v1"
+version: "1.0.0"
+status: "active"
+
+info:
+  title: "Billing Database Data Contract"
+  description: >
+    Data contract for the billing database used by MersalService ISP billing platform.
+    Covers customer billing history, plans, invoices, payments, prepaid transactions,
+    and supporting reference tables.
+  owner: "billing-team"
+  contact:
+    name: "Billing Team"
+    role: "Data Owner"
+
+tags:
+  - billing
+  - isp
+  - prepaid
+  - postpaid
+  - invoicing
+
+servers:
+  mysql:
+    server: mysql
+    type: mysql
+    host: localhost
+    port: 3306
+    username: root
+    password: 123
+    database: billing
+    schema: public
+
+models:
+
+  billing_history:
+    description: >
+      Records every billing action performed on a customer account,
+      including charges, refunds, and plan-related events.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      phone:
+        type: string
+        description: "Customer phone number used as account identifier"
+        maxLength: 200
+        pii: true
+      planId:
+        type: integer
+        description: "Reference to billing_plans.id"
+      billAmount:
+        type: string
+        description: "Amount billed to the customer (stored as string)"
+        maxLength: 200
+      billAction:
+        type: string
+        description: "Action code describing the billing event"
+        maxLength: 128
+        required: true
+        default: "Unavailable"
+      billPerformer:
+        type: string
+        description: "System or user that performed the billing action"
+        maxLength: 200
+      billReason:
+        type: string
+        description: "Human-readable reason for the billing action"
+        maxLength: 200
+      paymentmethod:
+        type: string
+        description: "Payment method used (e.g. PrePaid, PostPaid)"
+        maxLength: 200
+        enum: ["PrePaid", "PostPaid"]
+      bounce:
+        type: integer
+        description: "Bonus/bounce amount applied to the transaction"
+      notes:
+        type: string
+        description: "Free-text notes on the billing event"
+        maxLength: 200
+      creationdate:
+        type: timestamp
+        description: "Date and time the record was created"
+        default: "0000-00-00 00:00:00"
+      creationby:
+        type: string
+        description: "User or system that created the record"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Date and time the record was last updated"
+      updateby:
+        type: string
+        description: "User or system that last updated the record"
+        maxLength: 128
+
+    quality:
+      - rule: "accepted_values"
+        field: paymentmethod
+        values: ["PrePaid", "PostPaid"]
+        description: "Payment method must be one of the recognised types"
+
+  billing_plans:
+    description: >
+      Master catalogue of available Internet service plans,
+      including pricing, bandwidth, and billing schedule configuration.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      planName:
+        type: string
+        description: "Unique human-readable name of the plan"
+        maxLength: 128
+        required: true
+        unique: true
+      sharing:
+        type: integer
+        description: "Sharing/contention ratio for the plan"
+      planType:
+        type: string
+        description: "Category of the plan (e.g. Home, Silver, DC)"
+        maxLength: 128
+      planBandwidthUp:
+        type: string
+        description: "Upstream bandwidth allocation"
+        maxLength: 128
+      planBandwidthDown:
+        type: string
+        description: "Downstream bandwidth allocation"
+        maxLength: 128
+      planTrafficTotal:
+        type: string
+        description: "Total traffic quota per billing period"
+        maxLength: 128
+      planTrafficUp:
+        type: string
+        description: "Upstream traffic quota"
+        maxLength: 128
+      planTrafficDown:
+        type: string
+        description: "Downstream traffic quota"
+        maxLength: 128
+      planTrafficRefillCost:
+        type: string
+        description: "Cost for prepaid traffic top-up (NEW model)"
+        maxLength: 128
+      planRecurring:
+        type: string
+        description: "Recurring charge amount (new Paltel billing model)"
+        maxLength: 128
+      planRecurringPeriod:
+        type: string
+        description: "Period for recurring billing (e.g. Monthly)"
+        maxLength: 128
+      planRecurringBillingSchedule:
+        type: string
+        description: "Billing schedule type"
+        maxLength: 128
+        default: "Fixed"
+        enum: ["Fixed", "Dynamic"]
+      planCost:
+        type: string
+        description: "Plan cost under the old PrePaid model"
+        maxLength: 128
+      planSetupCost:
+        type: string
+        description: "Setup/PostPaid cost for the plan"
+        maxLength: 128
+      planTax:
+        type: string
+        description: "Applicable tax rate or amount"
+        maxLength: 128
+      planCurrency:
+        type: string
+        description: "Currency in which the plan is priced"
+        maxLength: 128
+      planActive:
+        type: string
+        description: "Whether the plan is currently available for new subscriptions"
+        maxLength: 32
+        default: "yes"
+        enum: ["yes", "no"]
+      notes:
+        type: string
+        description: "Additional notes about the plan"
+        maxLength: 200
+      creationdate:
+        type: timestamp
+        description: "Date and time the plan record was created"
+      creationby:
+        type: string
+        description: "User or system that created the plan"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Date and time the plan record was last updated"
+      updateby:
+        type: string
+        description: "User or system that last updated the plan"
+        maxLength: 128
+
+    quality:
+      - rule: "accepted_values"
+        field: planActive
+        values: ["yes", "no"]
+        description: "planActive must be 'yes' or 'no'"
+      - rule: "accepted_values"
+        field: planRecurringBillingSchedule
+        values: ["Fixed", "Dynamic"]
+        description: "Billing schedule must be a recognised value"
+
+  financial_summary:
+    description: >
+      Monthly financial roll-up records summarising total revenue,
+      number of transactions, and active customer counts.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      finDate:
+        type: string
+        description: "Reporting month in YYYY/MM format"
+        maxLength: 50
+        pattern: "^\\d{4}/\\d{2}$"
+      total:
+        type: number
+        description: "Total revenue collected in the reporting period"
+        minimum: 0
+      num_trans:
+        type: integer
+        description: "Number of transactions in the reporting period"
+        minimum: 0
+      num_customers:
+        type: integer
+        description: "Number of active customers in the reporting period"
+        minimum: 0
+      note:
+        type: string
+        description: "Free-text notes on the financial summary record"
+        maxLength: 200
+
+    quality:
+      - rule: "regex"
+        field: finDate
+        pattern: "^\\d{4}/\\d{2}$"
+        description: "finDate must follow YYYY/MM format"
+      - rule: "unique"
+        field: finDate
+        description: "Each reporting period (YYYY/MM) must appear only once in the table"
+
+  invoice:
+    description: >
+      Individual invoices issued to customers, linking users to billing plans
+      with itemised amounts, tax, totals, and payment status.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      user_id:
+        type: integer
+        description: "Reference to the userbillinfo table user ID"
+      plan_id:
+        type: integer
+        description: "Reference to billing_plans.id"
+      date:
+        type: timestamp
+        description: "Invoice date"
+        required: true
+        default: "2010-01-01 12:00:00"
+      amount:
+        type: number
+        description: "Base amount before tax"
+        required: true
+        minimum: 0
+        default: 0.00
+      tax_amount:
+        type: number
+        description: "Tax applied to the invoice"
+        required: true
+        minimum: 0
+        default: 0.15
+      total:
+        type: number
+        description: "Total amount including tax"
+        required: true
+        minimum: 0
+        default: 0.00
+      statusId:
+        type: integer
+        description: "Reference to invoice_status.id"
+        required: true
+      notes:
+        type: string
+        description: "Free-text description or processing notes"
+        maxLength: 128
+      creationdate:
+        type: date
+        description: "Date the invoice record was created"
+        default: "2010-01-01"
+      creationby:
+        type: string
+        description: "User or system that generated the invoice"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Timestamp of the last update"
+      updateby:
+        type: string
+        description: "User or system that last updated the invoice"
+        maxLength: 128
+      discount:
+        type: number
+        description: "Discount applied to the invoice"
+        required: true
+        minimum: 0
+        default: 0.00
+      btype:
+        type: string
+        description: >
+          Invoice behaviour and print flags:
+          n=normal, d=disconnected, r=reverse; p=printed, u=unprinted
+        maxLength: 3
+      nid:
+        type: integer
+        description: "Reference invoice ID used for reverse invoices"
+      prefix:
+        type: string
+        description: "Invoice prefix (e.g. ZI, XI)"
+        maxLength: 2
+        default: "ZI"
+      generationid:
+        type: integer
+        description: "Reference to tblgeneration.gid for batch generation tracking"
+      offerName:
+        type: string
+        description: "Name of any promotional offer applied to the invoice"
+        maxLength: 150
+
+    quality:
+      - rule: "custom"
+        description: "total must equal amount + tax_amount - discount (tolerance ±0.01)"
+        expression: "ABS(total - (amount + tax_amount - discount)) < 0.01"
+
+  invoice_status:
+    description: >
+      Lookup table of valid invoice status codes used by the invoice table.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      value:
+        type: string
+        description: "Status code string"
+        maxLength: 32
+        required: true
+        enum: ["open", "disputed", "draft", "sent", "paid", "partial"]
+      notes:
+        type: string
+        description: "Description of the status"
+        maxLength: 128
+        required: true
+      creationdate:
+        type: timestamp
+        description: "Record creation timestamp"
+      creationby:
+        type: string
+        description: "Creator of the status entry"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Last update timestamp"
+      updateby:
+        type: string
+        description: "Last updater of the status entry"
+        maxLength: 128
+
+    quality:
+      - rule: "accepted_values"
+        field: value
+        values: ["open", "disputed", "draft", "sent", "paid", "partial"]
+        description: "Status value must be from the approved set"
+
+  payment:
+    description: >
+      Individual payment records linked to invoices, recording
+      the amount paid, method, and processing timestamps.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      invoice_id:
+        type: integer
+        description: "Reference to invoice.id"
+        required: true
+      amount:
+        type: number
+        description: "Amount paid in this payment record"
+        required: true
+        minimum: 0
+      date:
+        type: timestamp
+        description: "Date and time the payment was recorded"
+        required: true
+      type_id:
+        type: integer
+        description: "Reference to payment_type.id"
+        required: true
+        default: 1
+      notes:
+        type: string
+        description: "Processing notes (e.g. gateway reference)"
+        maxLength: 128
+        required: true
+      creationdate:
+        type: date
+        description: "Date the payment record was created"
+      creationby:
+        type: string
+        description: "User or system that created the payment record"
+        maxLength: 128
+      updatedate:
+        type: date
+        description: "Date the payment record was last updated"
+      updateby:
+        type: string
+        description: "User or system that last updated the payment record"
+        maxLength: 128
+
+    quality:
+      - rule: "referential_integrity"
+        field: invoice_id
+        references: "invoice.id"
+        description: "Every payment must reference a valid invoice"
+      - rule: "custom"
+        field: amount
+        description: "Payment amount must be strictly greater than zero"
+        expression: "amount > 0"
+
+  payment_type:
+    description: >
+      Lookup table defining the types of payment accepted
+      by the billing platform.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      value:
+        type: string
+        description: "Payment type identifier"
+        maxLength: 32
+        required: true
+        enum: ["PostPaid", "PrePaid_TOPUP", "PrePaid_CARD", "PostPaid_RollBack"]
+      notes:
+        type: string
+        description: "Description of the payment type"
+        maxLength: 128
+        required: true
+      creationdate:
+        type: timestamp
+        description: "Record creation timestamp"
+      creationby:
+        type: string
+        description: "Creator of the payment type entry"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Last update timestamp"
+      updateby:
+        type: string
+        description: "Last updater"
+        maxLength: 128
+
+    quality:
+      - rule: "accepted_values"
+        field: value
+        values: ["PostPaid", "PrePaid_TOPUP", "PrePaid_CARD", "PostPaid_RollBack"]
+        description: "Payment type value must be from the approved set"
+
+  prepaid_transaction:
+    description: >
+      Tracks every balance change for prepaid customers, including
+      normal top-ups, rollbacks, speed upgrades, and allowance adjustments.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      balance_before:
+        type: integer
+        description: "Account balance prior to this transaction"
+        required: true
+      amount:
+        type: integer
+        description: "Amount added or deducted in this transaction"
+        required: true
+      bounce:
+        type: integer
+        description: "Bonus balance awarded with this transaction"
+        required: true
+        minimum: 0
+      allowance:
+        type: integer
+        description: "Service allowance adjustment applied"
+        required: true
+      balance_current:
+        type: integer
+        description: "Account balance after this transaction"
+        required: true
+      due_date:
+        type: date
+        description: "Expiry/finishing date for this balance credit"
+        required: true
+      userID:
+        type: integer
+        description: "Reference to the customer user record"
+        required: true
+      trans_status:
+        type: integer
+        description: "Transaction status flag (1=active)"
+        required: true
+      creationdate:
+        type: timestamp
+        description: "Timestamp when the transaction was created"
+        required: true
+      note:
+        type: string
+        description: "Optional notes on the transaction"
+        maxLength: 250
+      type:
+        type: integer
+        description: >
+          Transaction type:
+          1=normal charge, 2=rollback, 3=upgrade speed,
+          4=allowance adjustment, 5=stopped
+        enum: ['1', '2', '3', '4', '5']
+
+    quality:
+      - rule: "accepted_values"
+        field: type
+        values: [1, 2, 3, 4, 5]
+        description: "Transaction type must be a recognised code"
+      - rule: "custom"
+        description: "due_date must be on or after creationdate"
+        expression: "due_date >= DATE(creationdate)"
+
+  tblcampaign:
+    description: >
+      Discount and promotional campaigns that can be applied to
+      billing plans, defining percentage discounts and eligible plans.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      Name:
+        type: string
+        description: "Unique campaign name"
+        maxLength: 255
+        required: true
+        unique: true
+      value:
+        type: number
+        description: "Discount factor (e.g. 0.25 = 25% off)"
+        required: true
+        minimum: 0
+        maximum: 1
+      cstatus:
+        type: string
+        description: "Campaign status"
+        maxLength: 200
+        enum: ["Active", "InActive"]
+      cstart:
+        type: date
+        description: "Campaign start date"
+      cend:
+        type: date
+        description: "Campaign end date"
+      speeds:
+        type: string
+        description: "Comma-separated list of eligible plan names (stored as binary)"
+      description:
+        type: string
+        description: "Human-readable description of the campaign"
+        maxLength: 255
+        required: true
+      creationdate:
+        type: timestamp
+        description: "Record creation timestamp"
+      creationby:
+        type: string
+        description: "Creator of the campaign"
+        maxLength: 128
+      updatedate:
+        type: timestamp
+        description: "Last update timestamp"
+      updateby:
+        type: string
+        description: "Last updater of the campaign"
+        maxLength: 128
+      period:
+        type: integer
+        description: "Campaign duration in months (0 = indefinite)"
+        minimum: 0
+
+    quality:
+      - rule: "accepted_values"
+        field: cstatus
+        values: ["Active", "InActive"]
+        description: "Campaign status must be Active or InActive"
+      - rule: "custom"
+        description: "cend must be on or after cstart when both are populated"
+        expression: "cend IS NULL OR cstart IS NULL OR cend >= cstart"
+
+  tblgeneration:
+    description: >
+      Audit log of invoice batch generation runs, recording
+      when each monthly billing cycle was executed.
+    primaryKey: [gid]
+    fields:
+      gid:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      gdate:
+        type: date
+        description: "Date the generation run was executed"
+      gtime:
+        type: time
+        description: "Time the generation run was executed"
+      month:
+        type: string
+        description: "Billing month this run covers (YYYY-MM format)"
+        maxLength: 10
+        pattern: "^\\d{4}-\\d{2}$"
+      note:
+        type: string
+        description: "Notes on the generation run"
+        maxLength: 250
+
+    quality:
+      - rule: "regex"
+        field: month
+        pattern: "^\\d{4}-\\d{2}$"
+        description: "month field must follow YYYY-MM format"
+      - rule: "unique"
+        field: month
+        description: "Each billing month should be generated only once"
+
+  tbllinetype:
+    description: >
+      Reference table of transaction type labels used in tbllinetransactions.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      transtype:
+        type: string
+        description: "Human-readable transaction type label"
+        maxLength: 50
+      creationdate:
+        type: date
+        description: "Date the type was added"
+
+
+  tbllinetransactions:
+    description: >
+      High-volume audit log of all line-level events (activations,
+      reconnects, debits, plan changes) linked to customer bill IDs.
+    primaryKey: [id]
+    fields:
+      id:
+        type: integer
+        description: "Auto-incremented primary key"
+        required: true
+        unique: true
+        minimum: 1
+      transdate:
+        type: date
+        description: "Date the transaction occurred"
+        required: true
+      transtime:
+        type: time
+        description: "Time the transaction occurred"
+        default: "00:00:00"
+      typeid:
+        type: integer
+        description: "Reference to tbllinetype.id"
+      billid:
+        type: integer
+        description: "Reference to the associated bill record"
+      description:
+        type: string
+        description: "Short description of the transaction event"
+        maxLength: 255
+
+    quality:
+      - rule: "referential_integrity"
+        field: typeid
+        references: "tbllinetype.id"
+        description: "typeid must reference a valid entry in tbllinetype"
+
+serviceLevel:
+  availability: "99.5%"
+  retention:
+    period: "7 years"
+    reason: "Financial records must be retained for regulatory compliance"
+  freshness:
+    description: "Billing and payment records must be current within 24 hours of any transaction"
+    maxLatency: "24h"
+  support:
+    description: "Issues should be reported to the billing team. P1 incidents require response within 4 hours."
+
+pricing:
+  pricePerRecord: "N/A"
+  description: "Internal system — no external pricing applies"
+
+security:
+  piiFields:
+    - model: billing_history
+      fields: [phone]
+      handling: "Masked in non-production environments; access restricted to authorised billing staff"
+  accessControl:
+    description: "Read access granted to reporting and analytics roles. Write access limited to ISPServer and MersalService system accounts."
+  encryption:
+    atRest: true
+    inTransit: true
