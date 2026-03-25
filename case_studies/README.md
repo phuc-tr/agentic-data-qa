@@ -1,0 +1,1 @@
+This folder contains the case studies for the experiment.
