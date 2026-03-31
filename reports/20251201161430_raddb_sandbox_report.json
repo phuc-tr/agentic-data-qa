@@ -1,0 +1,246 @@
+{
+  "success": false,
+  "results": [
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_pair_values_a_to_be_greater_than_b",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column_A": "acctstoptime",
+          "column_B": "acctstarttime",
+          "or_equal": true
+        },
+        "meta": {
+          "check_id": "radacct:consistency:acctstoptime_gt_acctstarttime"
+        },
+        "id": "166c8ef4-bdc3-427b-824d-3dafcdfdc388",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": false,
+      "expectation_config": {
+        "type": "expect_column_values_to_be_in_set",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column": "acctterminatecause",
+          "value_set": [
+            "User-Request",
+            "Admin-Reset",
+            "Host-Request",
+            "NAS-Error",
+            "Port-Error",
+            "Service-Unvaliable"
+          ]
+        },
+        "meta": {
+          "check_id": "radacct:domain:acctterminatecause"
+        },
+        "id": "80e02d38-f35b-449a-87d1-cebb15745a8d",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 100,
+        "unexpected_percent": 100.0,
+        "partial_unexpected_list": [
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable",
+          "Service-Unavailable"
+        ],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 100.0,
+        "unexpected_percent_nonmissing": 100.0,
+        "partial_unexpected_counts": [
+          {
+            "value": "Service-Unavailable",
+            "count": 20
+          }
+        ],
+        "partial_unexpected_index_list": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_not_be_null",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column": "acctstarttime"
+        },
+        "meta": {
+          "check_id": "radacct:not_null:acctstarttime"
+        },
+        "id": "773e85e4-0d78-4f3c-afaa-0b57a5748bb0",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_not_be_null",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column": "acctstoptime"
+        },
+        "meta": {
+          "check_id": "radacct:not_null:acctstoptime"
+        },
+        "id": "66b8e417-9de3-4b7b-82ca-655ef2ad8dd8",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    },
+    {
+      "success": true,
+      "expectation_config": {
+        "type": "expect_column_values_to_be_unique",
+        "kwargs": {
+          "batch_id": "my_pandas_datasource-pd_dataframe_asset",
+          "column": "acctuniqueid"
+        },
+        "meta": {
+          "check_id": "radacct:unique:acctuniqueid"
+        },
+        "id": "15feb7ce-ddf1-40dd-a6bd-f8a57fc23de2",
+        "severity": "critical"
+      },
+      "result": {
+        "element_count": 100,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      },
+      "meta": {},
+      "exception_info": {
+        "raised_exception": false,
+        "exception_traceback": null,
+        "exception_message": null
+      }
+    }
+  ],
+  "suite_name": "radacct_expectation_suite",
+  "suite_parameters": {},
+  "statistics": {
+    "evaluated_expectations": 5,
+    "successful_expectations": 4,
+    "unsuccessful_expectations": 1,
+    "success_percent": 80.0
+  },
+  "meta": {
+    "great_expectations_version": "1.9.1",
+    "batch_spec": {
+      "batch_data": "PandasDataFrame"
+    },
+    "batch_markers": {
+      "ge_load_time": "20251201T151444.397485Z",
+      "pandas_data_fingerprint": "8be42685d630358e48bfc96d6548f568"
+    },
+    "active_batch_definition": {
+      "datasource_name": "my_pandas_datasource",
+      "data_connector_name": "fluent",
+      "data_asset_name": "pd_dataframe_asset",
+      "batch_identifiers": {
+        "dataframe": "<DATAFRAME>"
+      }
+    }
+  },
+  "id": null
+}
