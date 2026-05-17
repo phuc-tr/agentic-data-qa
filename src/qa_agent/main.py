@@ -1,33 +1,30 @@
 import subprocess
 import json
+import yaml
 from datetime import datetime
 from os import getenv
 from dotenv import load_dotenv
 
 from langchain.chat_models import init_chat_model
 from qa_agent.langgraph_src.prompt import (
-    GENERATE_CHECKS_PROMPT_TEMPLATE,
-    GENERATE_GX_SUITE_TEMPLATE,
-    GENERATE_GX_SUITE_TEMPLATE_SINGLE,
-    GATER_PROMPT,
-    UPDATE_CODE_PROMPT,
+    GENERATE_GX_UNRESOLVED_PROMPT,
+    FIX_ERROR_PROMPT,
     CRAFT_PULL_REQUEST_PROMPT,
-    FIX_ERROR_PROMPT
 )
-from qa_agent.langgraph_src.utils import get_latest_code, extract_python_code
+from qa_agent.langgraph_src.utils import extract_python_code
 from qa_agent.langgraph_src.validator import validate
+from qa_agent.langgraph_src.contract_parser import (
+    build_base_suite_from_cli,
+    extract_unresolved_rules,
+    build_llm_fragment,
+)
 from qa_agent.langgraph_src.github_utils import (
     create_branch,
     commit_files,
     create_pull_request,
     get_github_client,
 )
-from langgraph.graph import add_messages
-from langchain.messages import SystemMessage, HumanMessage, ToolCall
-from langchain_core.messages import BaseMessage
 from langgraph.func import entrypoint, task
-from langchain.agents import create_agent
-from pydantic import BaseModel, Field
 from pathlib import Path
 
 from qa_agent.langgraph_src import sampler
@@ -40,102 +37,76 @@ load_dotenv(env_path)
 model_coder = init_chat_model(model=getenv("CODER_MODEL", "gpt-5.2"))
 model_writer = init_chat_model(model=getenv("WRITER_MODEL", "gpt-3.5-turbo"))
 
-class GaterOutput(BaseModel):
-    update_needed: bool = Field(description="Whether an update to the expectation suite is needed.")
-    rationale: str = Field(description="Rationale for the decision.")
-
 # -------------------- TASKS -------------------- #
 
 @task
-def propose_quality_checks(data_contract: str, data_profile: str) -> str:
-    response = model_writer.invoke(
-        GENERATE_CHECKS_PROMPT_TEMPLATE.format(contract=data_contract, profile=data_profile)
-    )
-    return response.content
-
-@task
-def generate_quality_code(checks: str, metadata:str, framework: str) -> str:
+def generate_gx_for_unresolved(fragment: str, metadata: str) -> str:
     response = model_coder.invoke(
-        GENERATE_GX_SUITE_TEMPLATE.format(proposals=checks, metadata=metadata)
-    )
-    return response.content
-
-@task
-def generate_quality_code_single(contract: str) -> str:
-    response = model_coder.invoke(
-        GENERATE_GX_SUITE_TEMPLATE_SINGLE.format(contract=contract)
-    )
-    return response.content
-
-@task
-def gater(contract: str, latest_code: str, expectation_snippets: str) -> str:
-    agent = create_agent(model_writer, response_format=GaterOutput)
-    result = agent.invoke({
-        "messages": GATER_PROMPT.format(
-            contract=contract,
-            latest_code=latest_code,
-            expectation_snippets=expectation_snippets
-        )
-    })
-    return result["structured_response"]
-
-@task
-def update_expectation_suite(contract: str, latest_code: str, expectation_snippets: str) -> str:
-    response = model_coder.invoke(
-        UPDATE_CODE_PROMPT.format(
-            contract=contract,
-            latest_code=latest_code,
-            expectation_snippets=expectation_snippets
-        )
+        GENERATE_GX_UNRESOLVED_PROMPT.format(fragment=fragment, metadata=metadata)
     )
     return response.content
 
 @task
 def fix_errors_in_code(code: str, error_message: str) -> str:
     response = model_coder.invoke(
-        FIX_ERROR_PROMPT.format(
-            code=code,
-            error_message=error_message
-        )
+        FIX_ERROR_PROMPT.format(code=code, error_message=error_message)
     )
     return response.content
 
 @task
 def craft_pr_body(results: dict, old_code: str, new_code: str, data_contract: str) -> str:
     response = model_writer.invoke(
-        CRAFT_PULL_REQUEST_PROMPT.format(
+        _truncate(CRAFT_PULL_REQUEST_PROMPT.format(
             results=json.dumps(results, indent=2),
             old_code=old_code,
             new_code=new_code,
-            data_contract=data_contract
-        )
+            data_contract=data_contract,
+        ))
     )
     return response.content
 
-# -------------------- HELPER -------------------- #
+# -------------------- HELPERS -------------------- #
+
+GX_SUITE_NAME = "expectation_suite"
+
+
+def _read_gx_suite_json(suite_name: str = GX_SUITE_NAME) -> str:
+    with open(f"gx/expectations/{suite_name}.json") as f:
+        return f.read()
+
+
+def _suite_json_path(output_path: str) -> str:
+    return output_path.replace(".py", ".json")
+
+
+def _truncate(text: str, max_chars: int = 3000) -> str:
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + f"\n... [truncated {len(text) - max_chars} chars]"
+
 
 def limit_dict_depth(data, max_depth: int = 4, current_depth: int = 0):
-    """Limit dictionary depth to specified levels."""
     if current_depth >= max_depth:
         return str(data) if not isinstance(data, (dict, list)) else "..."
-    
     if isinstance(data, dict):
         return {k: limit_dict_depth(v, max_depth, current_depth + 1) for k, v in data.items()}
     elif isinstance(data, list):
         return [limit_dict_depth(item, max_depth, current_depth + 1) for item in data]
     return data
 
-def run_python_file(filepath: str, max_attempts: int = 5) -> str:
-    """Run a Python file and return output or attempt fixes."""
+
+def run_python_file(filepath: str, max_attempts: int = 5, reset_gx: bool = True) -> str:
+    """Run a Python file; retry with LLM error-fixing on failure."""
     attempt = 0
-    with open(filepath, "r") as f:
+    with open(filepath) as f:
         code = f.read()
 
     while attempt < max_attempts:
-        subprocess.run(["rm", "-rf", "gx"])
+        if reset_gx:
+            subprocess.run(["rm", "-rf", "gx"])
         proc = subprocess.run(["python", filepath], capture_output=True, text=True)
         if proc.returncode == 0:
-            return code  # Successfully ran
+            return code
         print(f"❌ Error in generated code. Attempt {attempt + 1}/{max_attempts}")
         print(proc.stderr)
         code = fix_errors_in_code(code, proc.stderr).result()
@@ -150,143 +121,104 @@ def run_python_file(filepath: str, max_attempts: int = 5) -> str:
 
 @entrypoint()
 def workflow_entry(params: dict):
-    mode = params.get("mode", "default")
     owner, repo, dataset = params["owner"], params["repo"], params["dataset"]
     output_path, contract = params["output_path"], params["contract"]
     base_branch = params.get("base_branch", "main")
     run_id = params.get("run_id") or datetime.now().strftime("%Y%m%d%H%M%S")
 
-    # Run sampler unless run_id is provided
+    # Run sampler unless a run_id was supplied (re-use existing artifacts)
     if not params.get("run_id"):
-        Path('artifacts/samples').mkdir(parents=True, exist_ok=True)
-        Path('artifacts/profiles').mkdir(parents=True, exist_ok=True)
-        Path('artifacts/metadata').mkdir(parents=True, exist_ok=True)
-        Path('artifacts/proposals').mkdir(parents=True, exist_ok=True)
-        Path('artifacts/failing_examples').mkdir(parents=True, exist_ok=True)
-        Path('artifacts/sandbox').mkdir(parents=True, exist_ok=True)
-
+        for d in ["samples", "profiles", "metadata", "proposals", "failing_examples", "sandbox"]:
+            Path(f"artifacts/{d}").mkdir(parents=True, exist_ok=True)
         sampler.sample(dataset=dataset, data_contract=contract, run_id=run_id)
 
     with open(contract) as f:
         data_contract = f.read()
+        contract_dict = yaml.safe_load(data_contract)
 
-    if mode == "single":
-        code = generate_quality_code_single(contract=data_contract).result()
-        code = extract_python_code(code)
+    # Load metadata if available
+    metadata_path = f"artifacts/metadata/{dataset}.schema_view.{run_id}.json"
+    try:
+        with open(metadata_path) as f:
+            metadata = f.read()
+    except FileNotFoundError:
+        metadata = "{}"
 
-        with open(output_path, "w") as f:
-            f.write(code)
+    # ── Stage 1: datacontract CLI export (schema-level checks) ──────────────
+    print("🔧 Stage 1: datacontract CLI export...")
+    subprocess.run(["rm", "-rf", "gx"])
+    cli_count = build_base_suite_from_cli(contract, suite_name=GX_SUITE_NAME)
+    print(f"✅ Stage 1 complete — {cli_count} rule(s) handled by CLI.")
 
-        # Verify generated code runs before committing
-        updated_code = run_python_file(output_path, 1)
-
-        # Validate generated expectations against sampled data
-        results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
-        pr_results = limit_dict_depth(results, max_depth=2)
-
-        gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
-        repo_obj = gh.get_repo(f"{owner}/{repo}")
-        branch = f"bot/single-{run_id}"
-
-        create_branch(repo_obj, branch, base_branch=base_branch)
-        commit_files(repo_obj, branch, {
-            output_path: code,
-            "report.json": json.dumps(results, indent=2)
-        }, "Single-agent update")
-
-        pr_body = f"Automated Great Expectations suite generated from contract: {contract}\n\nValidation summary\n{json.dumps(pr_results, indent=2)}"
-        pr = create_pull_request(repo_obj, head=branch, base=base_branch, title="Auto-GX: Single Mode", body=pr_body, draft=True)
-        print(f"✅ Pull request created: {pr.html_url}")
+    # ── Stage 2: classify — find rules the CLI could not handle ─────────────
+    print("🔍 Stage 2: classifying unresolved rules...")
+    unresolved = extract_unresolved_rules(contract_dict)
+    if unresolved:
+        print(f"  Found {len(unresolved)} unresolved rule(s): "
+              + ", ".join(f"{r['field']}({r['rule'].get('type','?')})" for r in unresolved))
     else:
-        if params.get("run_id"):
-            # Skip generation, assume code is at output_path
-            with open(output_path, "r") as f:
-                updated_code = f.read()
-            results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
+        print("  No unresolved rules — skipping LLM stage.")
 
-            gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
-            repo = gh.get_repo(f"{owner}/{repo}")
-            branch = f"bot/{run_id}"
-            create_branch(repo, branch, base_branch=base_branch)
-            commit_files(repo, branch, {
-                "report.json": json.dumps(results, indent=2)
-            }, "Validation results")
-            pr_body = f"Validation results for run {run_id}"
-            pr = create_pull_request(repo, head=branch, base=base_branch, title="Validation Report", body=pr_body, draft=True)
-            print(f"✅ Pull request created: {pr.html_url}")
-        else:
-            # Load profiles & contracts
-            with open(f"artifacts/profiles/{dataset}.{run_id}.json") as f:
-                data_profile = json.load(f)
-            with open(f"artifacts/metadata/{dataset}.schema_view.{run_id}.json") as f:
-                metadata = f.read()
+    # ── Stage 3: LLM for unresolved rules only ──────────────────────────────
+    llm_path = None
+    llm_code = None
+    if unresolved:
+        print("🤖 Stage 3: LLM generating expectations for unresolved rules...")
+        llm_fragment = build_llm_fragment(unresolved)
+        llm_code = generate_gx_for_unresolved(llm_fragment, metadata).result()
+        llm_code = extract_python_code(llm_code)
 
-            # Generate quality checks and code
-            checks = propose_quality_checks(data_contract, data_profile).result()
-            with open(f"artifacts/proposals/{dataset}.{run_id}.json", "w") as f:
-                f.write(checks)
+        llm_path = output_path.replace(".py", "_llm.py")
+        with open(llm_path, "w") as f:
+            f.write(llm_code)
 
-            code = generate_quality_code(checks, metadata=metadata, framework="Great Expectations").result()
+        # reset_gx=False: preserve the CLI-generated suite from Stage 1
+        run_python_file(llm_path, max_attempts=5, reset_gx=False)
+        print("✅ Stage 3 complete.")
 
-            # Load latest code and run gater
-            latest_code = get_latest_code(
-                filepath=f"expectations/{dataset}_suite.py",
-                repo_name=f"{owner}/{repo}",
-                branch=base_branch
-            )
+    # ── Stage 4: validate + commit ───────────────────────────────────────────
+    print("📊 Stage 4: validating and committing...")
+    suite_json = _read_gx_suite_json()
+    results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
+    pr_results = limit_dict_depth(results, max_depth=2)
 
-            gater_response = gater(
-                contract=data_contract,
-                latest_code=latest_code,
-                expectation_snippets=code
-            ).result()
+    gh = get_github_client(
+        getenv("GITHUB_APP_ID"),
+        int(getenv("GITHUB_INSTALLATION_ID")),
+        getenv("GITHUB_PRIVATE_KEY_PATH"),
+    )
+    repo_obj = gh.get_repo(f"{owner}/{repo}")
+    branch = f"bot/{run_id}"
 
-            if gater_response.update_needed:
-                print("✅ Update needed.")
-                branch = f"bot/{run_id}"
-                updated_code = update_expectation_suite(
-                    contract=data_contract,
-                    latest_code=latest_code,
-                    expectation_snippets=code
-                ).result()
+    files_to_commit = {
+        _suite_json_path(output_path): suite_json,
+        "report.json": json.dumps(results, indent=2),
+    }
+    if llm_path and llm_code:
+        with open(llm_path) as f:
+            files_to_commit[llm_path] = f.read()
 
-                updated_code = extract_python_code(updated_code)
+    create_branch(repo_obj, branch, base_branch=base_branch)
+    commit_files(repo_obj, branch, files_to_commit, "Automated update")
 
-                with open(output_path, "w") as f:
-                    f.write(updated_code)
-
-                updated_code = run_python_file(output_path)  # Ensure code runs
-
-                results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
-                pr_results = limit_dict_depth(results, max_depth=2)
-
-                gh = get_github_client(getenv("GITHUB_APP_ID"), int(getenv("GITHUB_INSTALLATION_ID")), getenv("GITHUB_PRIVATE_KEY_PATH"))
-                repo = gh.get_repo(f"{owner}/{repo}")
-
-                create_branch(repo, branch, base_branch=base_branch)
-                commit_files(repo, branch, {
-                    output_path: updated_code,
-                    "report.json": json.dumps(results, indent=2)
-                }, "Automated update")
-
-                pr_body = craft_pr_body(pr_results, latest_code, updated_code, data_contract).result()
-                pr = create_pull_request(repo, head=branch, base=base_branch, title="WIP: Automated update", body=pr_body, draft=True)
-                print(f"✅ Pull request created: {pr.html_url}")
-            else:
-                print("❌ No update needed.")
-                print(gater_response.rationale)
+    pr_body = craft_pr_body(pr_results, "", suite_json, data_contract).result()
+    pr = create_pull_request(
+        repo_obj, head=branch, base=base_branch,
+        title="WIP: Automated update", body=pr_body, draft=True,
+    )
+    print(f"✅ Pull request created: {pr.html_url}")
 
 
 import argparse
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--owner", required=1)
-    parser.add_argument("--repo", required=1)
-    parser.add_argument("--dataset", required=1)
-    parser.add_argument("--output_path", required=1)
-    parser.add_argument("--contract", required=1)
-    parser.add_argument("--base_branch", default='main')
-    parser.add_argument("--mode", default='default')
+    parser.add_argument("--owner", required=True)
+    parser.add_argument("--repo", required=True)
+    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--output_path", required=True)
+    parser.add_argument("--contract", required=True)
+    parser.add_argument("--base_branch", default="main")
     parser.add_argument("--run_id")
     args = parser.parse_args()
 
@@ -297,7 +229,6 @@ def main():
         "output_path": args.output_path,
         "contract": args.contract,
         "base_branch": args.base_branch,
-        "mode": args.mode,
         "run_id": args.run_id,
     })
 

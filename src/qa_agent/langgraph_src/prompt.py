@@ -539,15 +539,12 @@ Ensure the corrected code is complete, consistent, and ready to run.
 
 Do not include explanations; output only the full corrected code.
 
-The begining of the code should always start with. Do not change this code ever:
+The beginning of the code should always start with. Do not change this code ever:
 ```
 import great_expectations as gx
 
 context = gx.get_context(mode="file")
-
-suite_name = "expectation_suite"
-suite = gx.ExpectationSuite(name=suite_name)
-suite = context.suites.add(suite)
+suite = context.suites.get("expectation_suite")
 ```
 
 Code to fix:
@@ -569,7 +566,7 @@ Your task:
 Data Contract:
 {contract}
 
-Latest Expectation Suite Code:
+Latest Expectation Suite (JSON or code):
 {latest_code}
 
 New Expectation Snippet:
@@ -600,15 +597,122 @@ UPDATE_CODE_PROMPT = """Given the data contract and expectation suite, provide t
 Data Contract:
 {contract}
 
-Latest Expectation Suite Code:
+Latest Expectation Suite (JSON):
 {latest_code}
 
 New Expectation Snippet:
 {expectation_snippets}
 
-Provide only the updated code, no JSON or explanation.
+The latest suite may be provided as a JSON object. Translate it back into Python
+expectations code and incorporate the new snippet.
+
+Provide only the updated Python code, no JSON or explanation.
 
 Updated code:
+"""
+
+GENERATE_GX_UNRESOLVED_PROMPT = """
+You are a Great Expectations engineer. An expectation suite named "expectation_suite" already
+exists in the GX file context. Your job is to ADD expectations for quality rules that the
+datacontract CLI could not handle. The CLI only generates schema-level checks (column types,
+uniqueness, column list). Everything below is your responsibility.
+
+CRITICAL RULES:
+* Use `context.suites.get("expectation_suite")` — do NOT call `context.suites.add()`.
+* Only generate `suite.add_expectation(...)` calls — no suite creation, no validation.
+* Do not re-generate expectations for fields not listed below.
+* Set meta={{"check_id": "<model>:<check_type>:<field>"}} on every expectation.
+* Do not include any explanation — output only valid Python code.
+
+Rule-to-expectation mapping guide:
+  type: required          → ExpectColumnValuesToNotBeNull
+  metric: nullValues      → ExpectColumnValuesToNotBeNull(mostly=1 - threshold/100)
+  metric: invalidValues   → ExpectColumnValuesToBeInSet(value_set=validValues)
+  type: sql + quantile    → ExpectColumnQuantileValuesToBeBetween
+  type: freshness         → ExpectColumnValuesToBeBetween (timestamp window from now - threshold)
+  type: text (regex)      → ExpectColumnValuesToMatchRegex
+  type: text (comparison) → ExpectColumnPairValuesAToBeGreaterThanB
+
+Example output:
+```python
+import great_expectations as gx
+from datetime import datetime, timedelta
+
+context = gx.get_context(mode="file")
+suite = context.suites.get("expectation_suite")
+
+# required → not_null
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToNotBeNull(
+        meta={{"check_id": "raddb:not_null:radacctid"}},
+        column="radacctid"
+    )
+)
+
+# metric: nullValues, mustBeLessThan: 10 (percent)
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToNotBeNull(
+        meta={{"check_id": "raddb:not_null:calledstationid"}},
+        column="calledstationid",
+        mostly=0.9
+    )
+)
+
+# metric: invalidValues
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToBeInSet(
+        meta={{"check_id": "raddb:domain:nasporttype"}},
+        column="nasporttype",
+        value_set=["Virtual", "ISDN"]
+    )
+)
+
+# type: sql, mustBeLessThan: 30000 (95th percentile)
+suite.add_expectation(
+    gx.expectations.ExpectColumnQuantileValuesToBeBetween(
+        meta={{"check_id": "raddb:range:acctsessiontime"}},
+        column="acctsessiontime",
+        quantile_ranges={{"quantiles": [0.95], "value_ranges": [[0, 30000]]}}
+    )
+)
+
+# freshness: threshold 25h on acctstarttime
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToBeBetween(
+        meta={{"check_id": "raddb:freshness:acctstarttime"}},
+        column="acctstarttime",
+        min_value=(datetime.utcnow() - timedelta(hours=25)).isoformat(),
+        max_value=datetime.utcnow().isoformat()
+    )
+)
+
+# type: text — regex pattern
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToMatchRegex(
+        meta={{"check_id": "raddb:format:nasportid"}},
+        column="nasportid",
+        regex=r"^Uniq-Sess-ID\\d+$"
+    )
+)
+
+# type: text — column pair comparison
+suite.add_expectation(
+    gx.expectations.ExpectColumnPairValuesAToBeGreaterThanB(
+        meta={{"check_id": "raddb:range:acctstoptime"}},
+        column_A="acctstoptime",
+        column_B="acctstarttime",
+        or_equal=True
+    )
+)
+```
+
+Unresolved rules to implement (ONLY these — do not expand scope):
+{fragment}
+
+Column metadata for type context:
+{metadata}
+
+Output:
 """
 
 CRAFT_PULL_REQUEST_PROMPT = """
