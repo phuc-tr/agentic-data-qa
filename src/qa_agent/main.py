@@ -15,6 +15,7 @@ from qa_agent.langgraph_src.utils import extract_python_code
 from qa_agent.langgraph_src.validator import validate
 from qa_agent.langgraph_src.contract_parser import (
     build_base_suite_from_cli,
+    parse_cli_coverage,
     extract_unresolved_rules,
     build_llm_fragment,
 )
@@ -152,7 +153,9 @@ def workflow_entry(params: dict):
 
     # ── Stage 2: classify — find rules the CLI could not handle ─────────────
     print("🔍 Stage 2: classifying unresolved rules...")
-    unresolved = extract_unresolved_rules(contract_dict)
+    cli_suite = json.loads(_read_gx_suite_json())
+    cli_coverage = parse_cli_coverage(cli_suite)
+    unresolved = extract_unresolved_rules(contract_dict, cli_coverage=cli_coverage)
     if unresolved:
         print(f"  Found {len(unresolved)} unresolved rule(s): "
               + ", ".join(f"{r['field']}({r['rule'].get('type','?')})" for r in unresolved))
@@ -179,6 +182,9 @@ def workflow_entry(params: dict):
     # ── Stage 4: validate + commit ───────────────────────────────────────────
     print("📊 Stage 4: validating and committing...")
     suite_json = _read_gx_suite_json()
+    local_suite_path = _suite_json_path(output_path)
+    Path(local_suite_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(local_suite_path).write_text(suite_json)
     results = validate(run_id=run_id, dataset=dataset, data_contract=contract)
     pr_results = limit_dict_depth(results, max_depth=2)
 

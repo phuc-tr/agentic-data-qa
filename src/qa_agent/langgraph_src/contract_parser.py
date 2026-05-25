@@ -6,6 +6,40 @@ from pathlib import Path
 import great_expectations as gx
 
 
+# Maps GX expectation type strings to canonical check_type used by the evaluator
+_EXPECTATION_CHECK_TYPE: dict[str, str] = {
+    "expect_column_values_to_not_be_null": "not_null",
+    "expect_column_values_to_be_unique": "unique",
+    "expect_column_values_to_be_between": "range",
+    "expect_column_values_to_be_in_set": "domain",
+    "expect_column_distinct_values_to_be_in_set": "domain",
+    "expect_column_distinct_values_to_equal_set": "domain",
+    "expect_column_values_to_match_regex": "format",
+    "expect_column_values_to_match_strftime_format": "format",
+    "expect_column_values_to_match_like_pattern": "format",
+}
+
+
+def parse_cli_coverage(suite_json: dict) -> set[tuple[str, str]]:
+    """
+    Parse a GX suite JSON (as produced by the CLI in Stage 1) and return the set of
+    (field, check_type) pairs it already covers, using only expectation type + kwargs.
+    Expectations that already have a check_id in meta are skipped (LLM-generated).
+    """
+    covered: set[tuple[str, str]] = set()
+    for exp in suite_json.get("expectations", []):
+        if exp.get("meta", {}).get("check_id"):
+            continue  # already tagged by LLM — don't count as CLI coverage
+        exp_type = exp.get("type", "")
+        check_type = _EXPECTATION_CHECK_TYPE.get(exp_type)
+        if not check_type:
+            continue
+        column = exp.get("kwargs", {}).get("column")
+        if column:
+            covered.add((column, check_type))
+    return covered
+
+
 def _get_schema_names(contract_path: str) -> list[str]:
     """Return all schema/model names from the contract YAML."""
     with open(contract_path) as f:
@@ -65,17 +99,25 @@ def build_base_suite_from_cli(
     return len(cli_data.get("expectations", []))
 
 
-def extract_unresolved_rules(contract: dict) -> list[dict]:
+def extract_unresolved_rules(
+    contract: dict,
+    cli_coverage: set[tuple[str, str]] | None = None,
+) -> list[dict]:
     """
-    Return all quality rules that the datacontract CLI does not handle.
+    Return rules that the CLI did not cover and must be handled by the LLM.
 
-    The CLI covers only: column types, uniqueness, and column-list order.
-    Everything else is unresolved and must be handled by the LLM:
-      - required / primaryKey  → not_null expectations
-      - quality[*]             → metric (invalidValues, nullValues), sql, text rules
-      - servicelevels.freshness → freshness expectations
+    Structural rules (not_null, unique, range, domain, format) are checked against
+    cli_coverage: only those absent from the CLI suite are included.
+    Quality blocks (text, sql, library/metric) and freshness are always included
+    because the CLI never handles them.
+
+    If cli_coverage is None (e.g. CLI was skipped), all structural rules are included.
     """
     unresolved: list[dict] = []
+
+    def _missing(field: str, check_type: str) -> bool:
+        """True when the CLI suite does not already cover this (field, check_type)."""
+        return cli_coverage is None or (field, check_type) not in cli_coverage
 
     for model_name, model_def in contract.get("models", {}).items():
         if not isinstance(model_def, dict):
@@ -86,29 +128,45 @@ def extract_unresolved_rules(contract: dict) -> list[dict]:
             if not isinstance(field_def, dict):
                 continue
 
-            # required / primaryKey → not_null (CLI skips these)
-            if field_def.get("required") or field_def.get("primaryKey"):
+            field_type = field_def.get("type", "string")
+            desc = field_def.get("description", "")
+
+            if (field_def.get("required") or field_def.get("primaryKey")) and _missing(field_name, "not_null"):
                 unresolved.append({
-                    "model": model_name,
-                    "field": field_name,
-                    "field_type": field_def.get("type", "string"),
-                    "description": field_def.get("description", ""),
+                    "model": model_name, "field": field_name,
+                    "field_type": field_type, "description": desc,
                     "rule": {"type": "required"},
                 })
 
-            # ALL quality blocks (CLI ignores the entire quality key)
+            if (field_def.get("unique") or field_def.get("primaryKey")) and _missing(field_name, "unique"):
+                unresolved.append({
+                    "model": model_name, "field": field_name,
+                    "field_type": field_type, "description": desc,
+                    "rule": {"type": "unique"},
+                })
+
+            if ("minimum" in field_def or "maximum" in field_def) and _missing(field_name, "range"):
+                unresolved.append({
+                    "model": model_name, "field": field_name,
+                    "field_type": field_type, "description": desc,
+                    "rule": {
+                        "type": "range",
+                        "minimum": field_def.get("minimum"),
+                        "maximum": field_def.get("maximum"),
+                    },
+                })
+
+            # Quality blocks — CLI never handles these
             for q in field_def.get("quality", []):
                 if not isinstance(q, dict):
                     continue
                 unresolved.append({
-                    "model": model_name,
-                    "field": field_name,
-                    "field_type": field_def.get("type", "string"),
-                    "description": field_def.get("description", ""),
+                    "model": model_name, "field": field_name,
+                    "field_type": field_type, "description": desc,
                     "rule": q,
                 })
 
-        # Model-level quality rules
+        # Model-level quality rules — CLI never handles these
         for q in model_def.get("quality", []):
             if not isinstance(q, dict):
                 continue
@@ -120,7 +178,7 @@ def extract_unresolved_rules(contract: dict) -> list[dict]:
                 "rule": q,
             })
 
-    # Service-level freshness
+    # Service-level freshness — CLI never handles this
     sla = contract.get("servicelevels") or contract.get("serviceLevel") or {}
     freshness = sla.get("freshness", {})
     if isinstance(freshness, dict) and freshness:
@@ -141,18 +199,22 @@ def extract_unresolved_rules(contract: dict) -> list[dict]:
 
 def build_llm_fragment(unresolved: list[dict]) -> str:
     """
-    Build a minimal YAML fragment containing only the unresolved fields and their rules.
-    This — and nothing else — is sent to the LLM.
+    Build a minimal YAML fragment of unresolved fields and their rules for the LLM.
+    Keyed by "model.field" so same-named fields in different models are kept separate.
     """
     fragment: dict = {}
     for item in unresolved:
+        model = item.get("model", "")
         field = item["field"]
-        if field not in fragment:
-            fragment[field] = {
+        key = f"{model}.{field}" if model else field
+        if key not in fragment:
+            fragment[key] = {
+                "model": model,
+                "field": field,
                 "type": item["field_type"],
                 "description": item["description"],
                 "rules": [],
             }
-        fragment[field]["rules"].append(item["rule"])
+        fragment[key]["rules"].append(item["rule"])
 
     return yaml.dump({"unresolved_fields": fragment}, default_flow_style=False, sort_keys=False)

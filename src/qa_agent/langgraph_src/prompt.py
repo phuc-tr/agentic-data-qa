@@ -614,26 +614,19 @@ Updated code:
 GENERATE_GX_UNRESOLVED_PROMPT = """
 You are a Great Expectations engineer. An expectation suite named "expectation_suite" already
 exists in the GX file context. Your job is to ADD expectations for quality rules that the
-datacontract CLI could not handle. The CLI only generates schema-level checks (column types,
-uniqueness, column list). Everything below is your responsibility.
+datacontract CLI could not handle.
 
 CRITICAL RULES:
 * Use `context.suites.get("expectation_suite")` — do NOT call `context.suites.add()`.
 * Only generate `suite.add_expectation(...)` calls — no suite creation, no validation.
 * Do not re-generate expectations for fields not listed below.
 * Set meta={{"check_id": "<model>:<check_type>:<field>"}} on every expectation.
+* Choose the most appropriate GX expectation class for each rule — the examples below are
+  common patterns, not a fixed mapping. Use your judgment when the rule doesn't fit neatly.
 * Do not include any explanation — output only valid Python code.
 
-Rule-to-expectation mapping guide:
-  type: required          → ExpectColumnValuesToNotBeNull
-  metric: nullValues      → ExpectColumnValuesToNotBeNull(mostly=1 - threshold/100)
-  metric: invalidValues   → ExpectColumnValuesToBeInSet(value_set=validValues)
-  type: sql + quantile    → ExpectColumnQuantileValuesToBeBetween
-  type: freshness         → ExpectColumnValuesToBeBetween (timestamp window from now - threshold)
-  type: text (regex)      → ExpectColumnValuesToMatchRegex
-  type: text (comparison) → ExpectColumnPairValuesAToBeGreaterThanB
+Examples of how rules translate to expectations (illustrative, not exhaustive):
 
-Example output:
 ```python
 import great_expectations as gx
 from datetime import datetime, timedelta
@@ -641,7 +634,7 @@ from datetime import datetime, timedelta
 context = gx.get_context(mode="file")
 suite = context.suites.get("expectation_suite")
 
-# required → not_null
+# required / not-null constraint
 suite.add_expectation(
     gx.expectations.ExpectColumnValuesToNotBeNull(
         meta={{"check_id": "raddb:not_null:radacctid"}},
@@ -649,7 +642,25 @@ suite.add_expectation(
     )
 )
 
-# metric: nullValues, mustBeLessThan: 10 (percent)
+# uniqueness constraint
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToBeUnique(
+        meta={{"check_id": "raddb:unique:acctuniqueid"}},
+        column="acctuniqueid"
+    )
+)
+
+# numeric range (minimum / maximum from contract)
+suite.add_expectation(
+    gx.expectations.ExpectColumnValuesToBeBetween(
+        meta={{"check_id": "billing:range:amount"}},
+        column="amount",
+        min_value=0,
+        max_value=None
+    )
+)
+
+# null rate threshold (e.g. mustBeLessThan: 10 percent)
 suite.add_expectation(
     gx.expectations.ExpectColumnValuesToNotBeNull(
         meta={{"check_id": "raddb:not_null:calledstationid"}},
@@ -658,7 +669,7 @@ suite.add_expectation(
     )
 )
 
-# metric: invalidValues
+# allowed value set
 suite.add_expectation(
     gx.expectations.ExpectColumnValuesToBeInSet(
         meta={{"check_id": "raddb:domain:nasporttype"}},
@@ -667,7 +678,7 @@ suite.add_expectation(
     )
 )
 
-# type: sql, mustBeLessThan: 30000 (95th percentile)
+# percentile / quantile constraint
 suite.add_expectation(
     gx.expectations.ExpectColumnQuantileValuesToBeBetween(
         meta={{"check_id": "raddb:range:acctsessiontime"}},
@@ -676,7 +687,7 @@ suite.add_expectation(
     )
 )
 
-# freshness: threshold 25h on acctstarttime
+# freshness — data should not be older than a threshold
 suite.add_expectation(
     gx.expectations.ExpectColumnValuesToBeBetween(
         meta={{"check_id": "raddb:freshness:acctstarttime"}},
@@ -686,7 +697,7 @@ suite.add_expectation(
     )
 )
 
-# type: text — regex pattern
+# format / regex pattern
 suite.add_expectation(
     gx.expectations.ExpectColumnValuesToMatchRegex(
         meta={{"check_id": "raddb:format:nasportid"}},
@@ -695,7 +706,7 @@ suite.add_expectation(
     )
 )
 
-# type: text — column pair comparison
+# column ordering / comparison
 suite.add_expectation(
     gx.expectations.ExpectColumnPairValuesAToBeGreaterThanB(
         meta={{"check_id": "raddb:range:acctstoptime"}},
