@@ -1,0 +1,282 @@
+{
+  "name": "expectation_suite",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "radacctid",
+          "acctsessionid",
+          "acctuniqueid",
+          "realm",
+          "nasportid",
+          "nasporttype",
+          "acctstarttime",
+          "acctupdatetime",
+          "acctstoptime",
+          "acctinterval",
+          "acctsessiontime",
+          "acctauthentic",
+          "connectinfo_start",
+          "connectinfo_stop",
+          "acctinputoctets",
+          "acctoutputoctets",
+          "calledstationid",
+          "callingstationid",
+          "acctterminatecause",
+          "servicetype",
+          "framedprotocol",
+          "framedipv6address",
+          "framedipv6prefix",
+          "framedinterfaceid",
+          "delegatedipv6prefix"
+        ]
+      },
+      "meta": {},
+      "id": "62db9a47-92bb-49a4-aa8e-60427635afd0"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "radacctid",
+        "type_": "integer"
+      },
+      "meta": {},
+      "id": "cd69786c-e688-4ce9-a0bf-3bfae3410fd5"
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "radacctid"
+      },
+      "meta": {},
+      "id": "c170c61b-174a-4dd7-ab92-db4a84ba7a4d"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctsessionid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "3ed9a2b8-429f-41ea-bbe8-3ae491c53f76"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctuniqueid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "54f5704e-43be-4580-abbc-9cdb6a60be4e"
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "acctuniqueid"
+      },
+      "meta": {},
+      "id": "41efd1ba-a983-49d7-8979-18b952ae6514"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "realm",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "8c16f02b-c65b-44af-bee1-286e1252c14a"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "nasportid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "e4915af6-b8b2-4451-bf7b-942d8a2fa80d"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "nasporttype",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "a20db96f-736b-4ddf-be41-4bdfa5709ae3"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctstarttime",
+        "type_": "timestamp"
+      },
+      "meta": {},
+      "id": "c1e50eef-29ff-44de-905e-5e66f91dfa03"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctupdatetime",
+        "type_": "timestamp"
+      },
+      "meta": {},
+      "id": "03367ca0-855c-43a1-b6d6-de84a5d60743"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctstoptime",
+        "type_": "timestamp"
+      },
+      "meta": {},
+      "id": "f5f8b119-760f-4e65-837d-718bfda51118"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctinterval",
+        "type_": "integer"
+      },
+      "meta": {},
+      "id": "44c194c6-9e6c-4e76-86bb-90afa9107dc5"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctsessiontime",
+        "type_": "integer"
+      },
+      "meta": {},
+      "id": "37c39795-b6d5-43c4-84b0-069403f951e0"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctauthentic",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "f8b6438c-917f-4789-b5e4-24ae60397099"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "connectinfo_start",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "dc4e9c23-5d47-4a92-824a-6ca1485e8eb3"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "connectinfo_stop",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "672f51cc-d14c-4d10-8e66-f826de522ae3"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctinputoctets",
+        "type_": "integer"
+      },
+      "meta": {},
+      "id": "5b11d316-cf19-4b7e-8751-d855e3ffb59b"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctoutputoctets",
+        "type_": "integer"
+      },
+      "meta": {},
+      "id": "1bbc9a5c-626f-479a-8a27-07ca86c2f9da"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "calledstationid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "82d32baa-b157-44bd-8a5e-79b365bb9c6a"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "callingstationid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "80d6f546-4dc0-44b7-8fe4-268632b2aa66"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctterminatecause",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "d03d999e-7e53-49a6-b5cd-da10ad9a92b6"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "servicetype",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "ac9319c5-cc14-490b-ac8b-697f5442883b"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedprotocol",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "63abfec3-00c2-45ee-a167-f8c777f0aa9b"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedipv6address",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "3127c6bf-c086-4d1c-b597-5e98ffc36ba3"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedipv6prefix",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "c2ea8948-2770-4a0f-a530-96d38a27a429"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedinterfaceid",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "3e246846-024c-403f-b303-64d54c714fe6"
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "delegatedipv6prefix",
+        "type_": "string"
+      },
+      "meta": {},
+      "id": "44995f86-d5cc-4d21-ad19-8aeba2b2b787"
+    }
+  ],
+  "meta": {},
+  "id": "68154f35-402b-4e31-94af-2e7592e55980"
+}

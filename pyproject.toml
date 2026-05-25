@@ -7,7 +7,8 @@ name = "qa-agent"
 version = "0.1.0"
 description = "My Python package"
 authors = [{ name="Your Name", email="you@email.com" }]
-dependencies = []
+dependencies = [
+]
 
 [project.scripts]
 qa_agent = "qa_agent.main:main"

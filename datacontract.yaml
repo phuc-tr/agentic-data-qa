@@ -1,0 +1,21 @@
+dataContractSpecification: 1.2.1
+id: my-data-contract-id
+info:
+  title: My Data Contract
+  version: 0.0.1
+servers:
+  mysql:
+    type: mysql
+    host: localhost
+    port: 3306
+    database: raddb
+    schema: public
+models:
+  raddb:
+    type: table
+schema:
+  - name: radacct
+    physicalName: radacct
+    physicalType: table
+    description: RADIUS Accounting Table
+    dataGranularityDescription: Each record represents one RADIUS session (start/stop/update).

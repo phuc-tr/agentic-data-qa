@@ -1,0 +1,262 @@
+{
+  "name": "radacct.0.0.1",
+  "expectations": [
+    {
+      "type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "radacctid",
+          "acctsessionid",
+          "acctuniqueid",
+          "realm",
+          "nasportid",
+          "nasporttype",
+          "acctstarttime",
+          "acctupdatetime",
+          "acctstoptime",
+          "acctinterval",
+          "acctsessiontime",
+          "acctauthentic",
+          "connectinfo_start",
+          "connectinfo_stop",
+          "acctinputoctets",
+          "acctoutputoctets",
+          "calledstationid",
+          "callingstationid",
+          "acctterminatecause",
+          "servicetype",
+          "framedprotocol",
+          "framedipv6address",
+          "framedipv6prefix",
+          "framedinterfaceid",
+          "delegatedipv6prefix",
+          "created_at"
+        ]
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "radacctid",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "radacctid"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctsessionid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctuniqueid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "acctuniqueid"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "realm",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "nasportid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "nasporttype",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctstarttime",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctupdatetime",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctstoptime",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctinterval",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctsessiontime",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctauthentic",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "connectinfo_start",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "connectinfo_stop",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctinputoctets",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctoutputoctets",
+        "type_": "integer"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "calledstationid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "callingstationid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "acctterminatecause",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "servicetype",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedprotocol",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedipv6address",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedipv6prefix",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "framedinterfaceid",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "delegatedipv6prefix",
+        "type_": "string"
+      },
+      "meta": {}
+    },
+    {
+      "type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "created_at",
+        "type_": "timestamp"
+      },
+      "meta": {}
+    }
+  ],
+  "meta": {}
+}

@@ -1,0 +1,288 @@
+checks for radacct:
+- schema:
+    fail:
+      when required column missing:
+      - radacctid
+    name: radacct__radacctid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        radacctid: integer
+    name: radacct__radacctid__field_type
+- missing_count(radacctid) = 0:
+    name: radacct__radacctid__field_required
+- duplicate_count(radacctid) = 0:
+    name: radacct__radacctid__field_unique
+- schema:
+    fail:
+      when required column missing:
+      - acctsessionid
+    name: radacct__acctsessionid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctsessionid: string
+    name: radacct__acctsessionid__field_type
+- missing_count(acctsessionid) = 0:
+    name: radacct__acctsessionid__field_required
+- schema:
+    fail:
+      when required column missing:
+      - acctuniqueid
+    name: radacct__acctuniqueid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctuniqueid: string
+    name: radacct__acctuniqueid__field_type
+- missing_count(acctuniqueid) = 0:
+    name: radacct__acctuniqueid__field_required
+- duplicate_count(acctuniqueid) = 0:
+    name: radacct__acctuniqueid__field_unique
+- schema:
+    fail:
+      when required column missing:
+      - realm
+    name: radacct__realm__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        realm: string
+    name: radacct__realm__field_type
+- schema:
+    fail:
+      when required column missing:
+      - nasportid
+    name: radacct__nasportid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        nasportid: string
+    name: radacct__nasportid__field_type
+- schema:
+    fail:
+      when required column missing:
+      - nasporttype
+    name: radacct__nasporttype__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        nasporttype: string
+    name: radacct__nasporttype__field_type
+- invalid_count(nasporttype) < 1:
+    name: radacct__nasporttype__field_invalid_values
+- schema:
+    fail:
+      when required column missing:
+      - acctstarttime
+    name: radacct__acctstarttime__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctstarttime: timestamp
+    name: radacct__acctstarttime__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctupdatetime
+    name: radacct__acctupdatetime__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctupdatetime: timestamp
+    name: radacct__acctupdatetime__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctstoptime
+    name: radacct__acctstoptime__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctstoptime: timestamp
+    name: radacct__acctstoptime__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctinterval
+    name: radacct__acctinterval__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctinterval: integer
+    name: radacct__acctinterval__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctsessiontime
+    name: radacct__acctsessiontime__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctsessiontime: integer
+    name: radacct__acctsessiontime__field_type
+- radacct__acctsessiontime__quality_sql_0 < 30000:
+    name: radacct__acctsessiontime__quality_sql_0
+    radacct__acctsessiontime__quality_sql_0 query: SELECT quantile(acctsessiontime,
+      0.95) AS session_time_90th_percentile FROM radacct
+- schema:
+    fail:
+      when required column missing:
+      - acctauthentic
+    name: radacct__acctauthentic__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctauthentic: string
+    name: radacct__acctauthentic__field_type
+- schema:
+    fail:
+      when required column missing:
+      - connectinfo_start
+    name: radacct__connectinfo_start__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        connectinfo_start: string
+    name: radacct__connectinfo_start__field_type
+- schema:
+    fail:
+      when required column missing:
+      - connectinfo_stop
+    name: radacct__connectinfo_stop__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        connectinfo_stop: string
+    name: radacct__connectinfo_stop__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctinputoctets
+    name: radacct__acctinputoctets__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctinputoctets: integer
+    name: radacct__acctinputoctets__field_type
+- schema:
+    fail:
+      when required column missing:
+      - acctoutputoctets
+    name: radacct__acctoutputoctets__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctoutputoctets: integer
+    name: radacct__acctoutputoctets__field_type
+- schema:
+    fail:
+      when required column missing:
+      - calledstationid
+    name: radacct__calledstationid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        calledstationid: string
+    name: radacct__calledstationid__field_type
+- missing_count(calledstationid) < 10:
+    name: radacct__calledstationid__field_null_values
+- schema:
+    fail:
+      when required column missing:
+      - callingstationid
+    name: radacct__callingstationid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        callingstationid: string
+    name: radacct__callingstationid__field_type
+- missing_count(callingstationid) < 10:
+    name: radacct__callingstationid__field_null_values
+- schema:
+    fail:
+      when required column missing:
+      - acctterminatecause
+    name: radacct__acctterminatecause__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        acctterminatecause: string
+    name: radacct__acctterminatecause__field_type
+- invalid_count(acctterminatecause) < 1:
+    name: radacct__acctterminatecause__field_invalid_values
+- schema:
+    fail:
+      when required column missing:
+      - servicetype
+    name: radacct__servicetype__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        servicetype: string
+    name: radacct__servicetype__field_type
+- schema:
+    fail:
+      when required column missing:
+      - framedprotocol
+    name: radacct__framedprotocol__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        framedprotocol: string
+    name: radacct__framedprotocol__field_type
+- schema:
+    fail:
+      when required column missing:
+      - framedipv6address
+    name: radacct__framedipv6address__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        framedipv6address: string
+    name: radacct__framedipv6address__field_type
+- schema:
+    fail:
+      when required column missing:
+      - framedipv6prefix
+    name: radacct__framedipv6prefix__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        framedipv6prefix: string
+    name: radacct__framedipv6prefix__field_type
+- schema:
+    fail:
+      when required column missing:
+      - framedinterfaceid
+    name: radacct__framedinterfaceid__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        framedinterfaceid: string
+    name: radacct__framedinterfaceid__field_type
+- schema:
+    fail:
+      when required column missing:
+      - delegatedipv6prefix
+    name: radacct__delegatedipv6prefix__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        delegatedipv6prefix: string
+    name: radacct__delegatedipv6prefix__field_type
+- schema:
+    fail:
+      when required column missing:
+      - created_at
+    name: radacct__created_at__field_is_present
+- schema:
+    fail:
+      when wrong column type:
+        created_at: timestamp
+    name: radacct__created_at__field_type
+- missing_count(created_at) = 0:
+    name: radacct__created_at__field_required
+- freshness(created_at) < 25h:
+    name: servicelevel_freshness
+
