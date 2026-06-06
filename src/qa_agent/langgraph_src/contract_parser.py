@@ -54,7 +54,7 @@ def _get_schema_names(contract_path: str) -> list[str]:
 
 
 def _export_one(contract_path: str, schema_name: str | None = None) -> dict:
-    cmd = ["datacontract", "export", "--format", "great-expectations", "--engine", "pandas", contract_path]
+    cmd = ["datacontract", "export", "great-expectations", contract_path, "--engine", "pandas"]
     if schema_name:
         cmd += ["--schema-name", schema_name]
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -197,24 +197,87 @@ def extract_unresolved_rules(
     return unresolved
 
 
-def build_llm_fragment(unresolved: list[dict]) -> str:
+def build_pruned_contract_yaml(contract_dict: dict, unresolved: list[dict]) -> str:
     """
-    Build a minimal YAML fragment of unresolved fields and their rules for the LLM.
-    Keyed by "model.field" so same-named fields in different models are kept separate.
+    Return the original contract YAML with only the rules the CLI could not handle.
+    CLI-covered properties (type, physicalType, maxLength, classification, etc.) are
+    stripped; only unresolved structural rules and quality blocks are kept, preserving
+    the original models → fields → quality structure.
     """
-    fragment: dict = {}
+    # Group unresolved items by (model, field); track freshness separately
+    by_field: dict[tuple[str, str], list[dict]] = {}
+    has_freshness = False
     for item in unresolved:
-        model = item.get("model", "")
-        field = item["field"]
-        key = f"{model}.{field}" if model else field
-        if key not in fragment:
-            fragment[key] = {
-                "model": model,
-                "field": field,
-                "type": item["field_type"],
-                "description": item["description"],
-                "rules": [],
-            }
-        fragment[key]["rules"].append(item["rule"])
+        rule = item["rule"]
+        if rule.get("type") == "freshness":
+            has_freshness = True
+            continue
+        key = (item["model"], item["field"])
+        by_field.setdefault(key, []).append(item)
 
-    return yaml.dump({"unresolved_fields": fragment}, default_flow_style=False, sort_keys=False)
+    pruned: dict = {}
+    for top_key in ("dataContractSpecification", "id", "info"):
+        if top_key in contract_dict:
+            pruned[top_key] = contract_dict[top_key]
+
+    pruned_models: dict = {}
+    for model_name, model_def in (contract_dict.get("models") or {}).items():
+        if not isinstance(model_def, dict):
+            continue
+
+        pruned_fields: dict = {}
+        for field_name, field_def in (model_def.get("fields") or {}).items():
+            field_items = by_field.get((model_name, field_name), [])
+            if not field_items:
+                continue
+
+            pruned_field: dict = {}
+            if field_def.get("type"):
+                pruned_field["type"] = field_def["type"]
+            if field_def.get("description"):
+                pruned_field["description"] = field_def["description"]
+
+            quality = []
+            for item in field_items:
+                rule = item["rule"]
+                rule_type = rule.get("type")
+                if rule_type == "required":
+                    pruned_field["required"] = True
+                elif rule_type == "unique":
+                    pruned_field["unique"] = True
+                elif rule_type == "range":
+                    if rule.get("minimum") is not None:
+                        pruned_field["minimum"] = rule["minimum"]
+                    if rule.get("maximum") is not None:
+                        pruned_field["maximum"] = rule["maximum"]
+                else:
+                    quality.append(dict(rule))
+
+            if quality:
+                pruned_field["quality"] = quality
+            pruned_fields[field_name] = pruned_field
+
+        model_quality = [item["rule"] for item in by_field.get((model_name, ""), [])]
+
+        if pruned_fields or model_quality:
+            pruned_model: dict = {}
+            if model_def.get("type"):
+                pruned_model["type"] = model_def["type"]
+            if model_def.get("description"):
+                pruned_model["description"] = model_def["description"]
+            if pruned_fields:
+                pruned_model["fields"] = pruned_fields
+            if model_quality:
+                pruned_model["quality"] = model_quality
+            pruned_models[model_name] = pruned_model
+
+    if pruned_models:
+        pruned["models"] = pruned_models
+
+    if has_freshness:
+        for key in ("servicelevels", "serviceLevel"):
+            if key in contract_dict:
+                pruned[key] = contract_dict[key]
+                break
+
+    return yaml.dump(pruned, default_flow_style=False, sort_keys=False, allow_unicode=True)

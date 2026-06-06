@@ -17,7 +17,7 @@ from qa_agent.langgraph_src.contract_parser import (
     build_base_suite_from_cli,
     parse_cli_coverage,
     extract_unresolved_rules,
-    build_llm_fragment,
+    build_pruned_contract_yaml,
 )
 from qa_agent.langgraph_src.github_utils import (
     create_branch,
@@ -167,7 +167,11 @@ def workflow_entry(params: dict):
     llm_code = None
     if unresolved:
         print("🤖 Stage 3: LLM generating expectations for unresolved rules...")
-        llm_fragment = build_llm_fragment(unresolved)
+        llm_fragment = build_pruned_contract_yaml(contract_dict, unresolved)
+        contract_name = Path(contract).stem  # e.g. "contract.raddb"
+        llm_yaml_path = Path("expectations") / f"{contract_name}.llm.yaml"
+        llm_yaml_path.parent.mkdir(parents=True, exist_ok=True)
+        llm_yaml_path.write_text(llm_fragment)
         llm_code = generate_gx_for_unresolved(llm_fragment, metadata).result()
         llm_code = extract_python_code(llm_code)
 

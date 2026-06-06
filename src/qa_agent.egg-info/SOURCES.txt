@@ -9,7 +9,6 @@ src/qa_agent.egg-info/entry_points.txt
 src/qa_agent.egg-info/top_level.txt
 src/qa_agent/langgraph_src/__init__.py
 src/qa_agent/langgraph_src/contract_parser.py
-src/qa_agent/langgraph_src/evaluator.py
 src/qa_agent/langgraph_src/github_utils.py
 src/qa_agent/langgraph_src/prompt.py
 src/qa_agent/langgraph_src/sampler.py
