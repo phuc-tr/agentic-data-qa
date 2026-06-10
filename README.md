@@ -6,14 +6,139 @@ An agentic pipeline that generates [Great Expectations](https://greatexpectation
 
 ---
 
-## How It Works
+## Pipeline Architecture
 
-The pipeline runs in four stages:
+```
+Data Contract (YAML)
+        │
+        ▼
+┌──────────────────┐
+│  Stage 0         │  Sampler: query DB → Parquet + profile JSON
+│  Sampling        │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  Stage 1         │  datacontract CLI → GX suite JSON
+│  CLI Export      │  (structural checks only)
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  Stage 2         │  Gap classifier: find rules the CLI missed
+│  Gap Analysis    │
+└────────┬─────────┘
+         │  (if gaps exist)
+         ▼
+┌──────────────────┐
+│  Stage 3         │  LLM coder → append expectations to suite
+│  LLM Generation  │  (with self-healing retry loop)
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  Stage 4         │  GX validation on sample → report + GitHub PR
+│  Validate & PR   │
+└──────────────────┘
+```
 
-1. **Sample** — connects to MySQL, samples 100 rows per table, and writes Parquet files + column profiles to `artifacts/`.
-2. **CLI export (Stage 1)** — uses the `datacontract` CLI to translate schema-level rules (not-null, unique, range, domain, format) into a GX expectation suite.
-3. **LLM generation (Stage 3)** — for any rules the CLI could not handle (quality blocks, freshness, missed structural rules), an LLM generates the remaining expectations.
-4. **Validate + PR (Stage 4)** — runs GX validation against the sample data, saves the suite JSON and a validation report, then creates a draft pull request on GitHub.
+**Stage 0 — Sampling** connects to the MySQL database declared in the contract's `servers` block and queries up to 100 rows per table. Results are written as Parquet files under `artifacts/samples/`. A column-level profile (null rate, distinct ratio, numeric percentiles) is saved to `artifacts/profiles/` and fed to the LLM as context.
+
+**Stage 1 — CLI Export** invokes the `datacontract` CLI against the contract YAML to generate a GX suite JSON. The CLI handles only rules structurally encoded in field properties (`required`, `unique`, `minimum`/`maximum`, `enum`, `pattern`). It cannot express `text`, `sql`, or `custom` quality blocks, freshness SLAs, or referential integrity rules.
+
+**Stage 2 — Gap Analysis** parses the generated suite to determine which `(field, check_type)` pairs are already covered, then emits an `unresolved` list for everything the CLI missed. Each unresolved item is serialised as a YAML fragment that becomes the LLM prompt input.
+
+**Stage 3 — LLM Generation** receives the unresolved rules and schema metadata. It appends expectations to the existing suite and tags each one with `meta={"check_id": "<model>:<check_type>:<field>"}`. A self-healing retry loop (up to 5 attempts) feeds Python tracebacks back to the LLM to fix execution errors.
+
+**Stage 4 — Validation & PR** validates all table samples against the GX suite, writes the full report to `artifacts/sandbox/{dataset}.{run_id}.report.json`, commits the results to a `bot/{run_id}` branch, and opens a draft GitHub PR.
+
+---
+
+## Worked Example (raddb)
+
+### Stage 1 — What the CLI can generate
+
+Given this contract snippet:
+
+```yaml
+models:
+  radacct:
+    fields:
+      radacctid:
+        type: integer
+        required: true
+        unique: true          # ← CLI picks this up
+
+      nasporttype:
+        type: string
+        quality:
+          - type: library
+            metric: invalidValues
+            arguments:
+              validValues: [Virtual, ISDN]   # ← CLI picks this up
+
+      nasportid:
+        type: string
+        quality:
+          - type: text
+            description: Must follow format "Uniq-Sess-ID<id>" where <id> are numerics.
+            # ← CLI cannot express free-text rules — skipped
+
+      acctsessiontime:
+        type: integer
+        quality:
+          - type: sql
+            description: 95% of acctsessiontime should be less than 30000 seconds.
+            query: SELECT quantile(acctsessiontime, 0.95) FROM radacct
+            # ← CLI cannot express SQL rules — skipped
+
+servicelevels:
+  freshness:
+    description: Data should be no older than 25 hours.
+    timestampField: radacct.acctstarttime
+    # ← CLI cannot express freshness SLAs — skipped
+```
+
+The CLI produces only the checks it can express structurally:
+
+```json
+{ "type": "expect_column_values_to_be_of_type", "kwargs": { "column": "radacctid", "type_": "int32" }, "meta": {} }
+{ "type": "expect_column_values_to_be_unique",  "kwargs": { "column": "radacctid" },                  "meta": {} }
+{ "type": "expect_column_values_to_be_of_type", "kwargs": { "column": "nasporttype", "type_": "str" }, "meta": {} }
+```
+
+`nasporttype`'s domain check, `nasportid`'s format rule, `acctsessiontime`'s percentile rule, and the freshness SLA produce no expectations — they become gaps. Note: the CLI translates `required: true` into a type check, not a null check, so `not_null` for required fields is always a gap passed to the LLM.
+
+### Stage 2 — Gaps passed to the LLM
+
+The gap classifier emits the unresolved items as a pruned YAML fragment:
+
+```yaml
+radacct.radacctid:
+  not_null: "radacctid is required (primaryKey)"
+
+radacct.nasportid:
+  format: 'Must follow format "Uniq-Sess-ID<id>" where <id> are numerics.'
+
+radacct.nasporttype:
+  domain: "Ensure nasporttype uses valid port types: [Virtual, ISDN]"
+
+radacct.acctsessiontime:
+  range: "95% of acctsessiontime should be less than 30000 seconds."
+
+radacct.acctstarttime:
+  freshness: "Data should be no older than 25 hours."
+```
+
+The LLM generates GX expectations for each item, tagging every one with a `check_id`:
+
+```json
+{ "type": "expect_column_values_to_not_be_null",        "kwargs": { "column": "radacctid" },                                    "meta": { "check_id": "radacct:not_null:radacctid" } }
+{ "type": "expect_column_values_to_match_regex",         "kwargs": { "column": "nasportid", "regex": "^Uniq-Sess-ID\\d+$" },    "meta": { "check_id": "radacct:format:nasportid" } }
+{ "type": "expect_column_values_to_be_in_set",           "kwargs": { "column": "nasporttype", "value_set": ["Virtual","ISDN"] }, "meta": { "check_id": "radacct:domain:nasporttype" } }
+{ "type": "expect_column_quantile_values_to_be_between", "kwargs": { "column": "acctsessiontime", "..." : "..." },               "meta": { "check_id": "radacct:range:acctsessiontime" } }
+{ "type": "expect_column_values_to_be_between",          "kwargs": { "column": "acctstarttime", "..." : "..." },                 "meta": { "check_id": "radacct:freshness:acctstarttime" } }
+```
 
 ---
 
